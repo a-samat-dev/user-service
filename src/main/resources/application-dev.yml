@@ -1,5 +1,14 @@
 server:
   port: 5000
+spring:
+  datasource:
+    url: ${RDS_URL}
+    username: ${RDS_USERNAME}
+    password: ${RDS_PASSWORD}
+  flyway:
+    url: ${RDS_URL}
+    user: ${RDS_USERNAME}
+    password: ${RDS_PASSWORD}
 eureka:
   client:
     service-url:
