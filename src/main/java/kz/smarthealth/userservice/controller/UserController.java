@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.UUID;
 
 /**
  * REST API to manipulate user data
@@ -35,5 +36,27 @@ public class UserController {
     @PostMapping("/sign-in")
     public LoginResponseDTO authenticateUser(@RequestBody @Valid LoginRequestDTO loginRequestDTO) {
         return userService.authenticateUser(loginRequestDTO);
+    }
+
+    /**
+     * Retrieves user by id
+     *
+     * @param id of user
+     * @return user information
+     */
+    @GetMapping("/{id}")
+    public UserDTO getUserById(@PathVariable UUID id) {
+        return userService.getUserById(id);
+    }
+
+    /**
+     * Delete user by id
+     *
+     * @param id of user
+     */
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteUserById(@PathVariable UUID id) {
+        userService.deleteUserById(id);
     }
 }

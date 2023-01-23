@@ -26,14 +26,16 @@ import java.util.Set;
 import java.util.UUID;
 
 import static kz.smarthealth.userservice.util.MessageSource.USER_BY_EMAIL_NOT_FOUND;
+import static kz.smarthealth.userservice.util.MessageSource.USER_BY_ID_NOT_FOUND;
 import static kz.smarthealth.userservice.util.TestData.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
  * Unit tests for {@link UserService}
- *
+ * <p>
  * Created by Samat Abibulls on 2022-11-02
  */
 @ExtendWith(MockitoExtension.class)
@@ -181,5 +183,75 @@ class UserServiceTest {
                 () -> underTest.authenticateUser(loginRequestDTO));
         // then
         assertEquals(USER_BY_EMAIL_NOT_FOUND.getText(TEST_EMAIL), exception.getMessage());
+    }
+
+    @Test
+    void getUserById_throwsError_whenUserNotFound() {
+        // given
+        UUID invalidId = UUID.randomUUID();
+        when(userRepository.findById(invalidId)).thenReturn(Optional.empty());
+        // when
+        CustomException exception = assertThrows(CustomException.class,
+                () -> underTest.getUserById(invalidId));
+        // then
+        assertEquals(USER_BY_ID_NOT_FOUND.getText(invalidId.toString()), exception.getMessage());
+    }
+
+    @Test
+    void getUserById_returnsUser() {
+        // given
+        UserEntity userEntity = getUserEntity();
+        UUID userId = UUID.randomUUID();
+        when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
+        // when
+        UserDTO userDTO = underTest.getUserById(userId);
+        // then
+        assertNotNull(userDTO);
+        assertEquals(userEntity.getCreatedAt(), userDTO.getCreatedAt());
+        assertEquals(userEntity.getCreatedBy(), userDTO.getCreatedBy());
+        assertEquals(userEntity.getUpdatedAt(), userDTO.getUpdatedAt());
+        assertEquals(userEntity.getUpdatedBy(), userDTO.getUpdatedBy());
+        assertEquals(userEntity.getId(), userDTO.getId());
+        assertEquals(userEntity.getEmail(), userDTO.getEmail());
+        assertEquals(userEntity.getName(), userDTO.getName());
+        assertEquals(userEntity.getLastName(), userDTO.getLastName());
+        assertEquals(userEntity.getBirthDate(), userDTO.getBirthDate());
+        assertEquals(userEntity.getAbout(), userDTO.getAbout());
+        assertNotNull(userDTO.getContact());
+        assertEquals(userEntity.getContact().getCreatedAt(), userDTO.getContact().getCreatedAt());
+        assertEquals(userEntity.getContact().getCreatedBy(), userDTO.getContact().getCreatedBy());
+        assertEquals(userEntity.getContact().getUpdatedAt(), userDTO.getContact().getUpdatedAt());
+        assertEquals(userEntity.getContact().getUpdatedBy(), userDTO.getContact().getUpdatedBy());
+        assertEquals(userEntity.getContact().getId(), userDTO.getContact().getId());
+        assertEquals(userEntity.getContact().getCityId(), userDTO.getContact().getCityId());
+        assertEquals(userEntity.getContact().getStreet(), userDTO.getContact().getStreet());
+        assertEquals(userEntity.getContact().getBuildingNumber(), userDTO.getContact().getBuildingNumber());
+        assertEquals(userEntity.getContact().getFlatNumber(), userDTO.getContact().getFlatNumber());
+        assertEquals(userEntity.getContact().getPhoneNumber1(), userDTO.getContact().getPhoneNumber1());
+        assertEquals(userEntity.getContact().getPhoneNumber2(), userDTO.getContact().getPhoneNumber2());
+    }
+
+    @Test
+    void deleteUserById_throwsError_whenUserNotFound() {
+        // given
+        UUID invalidId = UUID.randomUUID();
+        when(userRepository.findById(invalidId)).thenReturn(Optional.empty());
+        // when
+        CustomException exception = assertThrows(CustomException.class,
+                () -> underTest.deleteUserById(invalidId));
+        // then
+        assertEquals(USER_BY_ID_NOT_FOUND.getText(invalidId.toString()), exception.getMessage());
+    }
+
+    @Test
+    void deleteUserById_deletesUser() {
+        // given
+        UserEntity userEntity = getUserEntity();
+        UUID userId = UUID.randomUUID();
+        when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
+        // when
+        underTest.deleteUserById(userId);
+        // then
+        verify(userRepository).deleteById(userId);
     }
 }

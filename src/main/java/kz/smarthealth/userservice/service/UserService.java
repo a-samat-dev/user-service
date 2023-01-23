@@ -22,13 +22,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static kz.smarthealth.userservice.util.MessageSource.*;
 
 /**
  * Service class used to operate with user data
- *
+ * <p>
  * Created by Samat Abibulla on 2022-10-11
  */
 @Slf4j
@@ -62,13 +63,7 @@ public class UserService {
      */
     @Transactional
     public UserDTO createUser(UserDTO userDTO) {
-        userRepository.findByEmail(userDTO.getEmail()).ifPresent(entity -> {
-            throw CustomException.builder()
-                    .status(HttpStatus.BAD_REQUEST)
-                    .error("Invalid email address")
-                    .message(EMAIL_IN_USE.getText(userDTO.getEmail()))
-                    .build();
-        });
+        validateEmail(userDTO.getEmail());
         UserEntity userEntity = modelMapper.map(userDTO, UserEntity.class);
         userEntity.setCreatedBy(userEntity.getEmail());
         userEntity.setUpdatedBy(userEntity.getEmail());
@@ -82,6 +77,22 @@ public class UserService {
         createdUserDTO.setRoles(userDTO.getRoles());
 
         return createdUserDTO;
+    }
+
+    /**
+     * Checks if user email address is in use
+     *
+     * @param email address of user
+     */
+    private void validateEmail(String email) {
+        userRepository.findByEmail(email)
+                .ifPresent(entity -> {
+                    throw CustomException.builder()
+                            .status(HttpStatus.BAD_REQUEST)
+                            .error("Invalid email address")
+                            .message(EMAIL_IN_USE.getText(email))
+                            .build();
+                });
     }
 
     /**
@@ -134,5 +145,37 @@ public class UserService {
                 .refreshToken(refreshToken)
                 .user(userDTO)
                 .build();
+    }
+
+    /**
+     * Retrieves user by id
+     *
+     * @param id of user
+     * @return user information
+     */
+    @Transactional(readOnly = true)
+    public UserDTO getUserById(UUID id) {
+        UserEntity userEntity = userRepository.findById(id)
+                .orElseThrow(() -> CustomException.builder()
+                        .status(HttpStatus.NOT_FOUND)
+                        .error(HttpStatus.NOT_FOUND.name())
+                        .message(USER_BY_ID_NOT_FOUND.getText(id.toString()))
+                        .build());
+        UserDTO userDTO = modelMapper.map(userEntity, UserDTO.class);
+        userDTO.setRoles(new HashSet<>(userEntity.getRoles().size()));
+        userEntity.getRoles().forEach(role -> userDTO.getRoles().add(role.getName()));
+
+        return userDTO;
+    }
+
+    /**
+     * Delete user by id
+     *
+     * @param id of user
+     */
+    @Transactional
+    public void deleteUserById(UUID id) {
+        getUserById(id);
+        userRepository.deleteById(id);
     }
 }
