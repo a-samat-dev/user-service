@@ -1,0 +1,30 @@
+To create users index in elastic search below request must be made to elasticsearch server
+
+PUT /users
+{
+  "mappings": {
+    "dynamic": false,
+    "properties": {
+      "id": {
+        "type": "keyword"
+      },
+      "email": {
+        "type": "text"
+      },
+      "name": {
+        "type": "text"
+      },
+      "lastName": {
+        "type": "text"
+      },
+      "contact": {
+        "type": "nested",
+        "properties": {
+          "cityId": {
+            "type": "integer"
+          }
+        }
+      }
+    }
+  }
+}

@@ -27,12 +27,35 @@ public class ContactEntity {
     @GeneratedValue(generator = "UUID")
     @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
     private UUID id;
+
+    @Column(nullable = false)
+    private Short cityId;
+
+    @Column(nullable = false)
+    private String street;
+
+    @Column(nullable = false)
+    private String buildingNumber;
+
+    private String flatNumber;
+
+    @Column(nullable = false)
+    private String phoneNumber1;
+
+    private String phoneNumber2;
+
+    @OneToOne(mappedBy = "contact")
+    private UserEntity user;
+
     @Column(nullable = false)
     protected OffsetDateTime createdAt;
+
     @Column(nullable = false)
     protected OffsetDateTime updatedAt;
+
     @Column(nullable = false)
     protected String createdBy;
+
     @Column(nullable = false)
     protected String updatedBy;
 
@@ -43,18 +66,4 @@ public class ContactEntity {
         }
         this.updatedAt = OffsetDateTime.now();
     }
-
-    @Column(nullable = false)
-    private Short cityId;
-    @Column(nullable = false)
-    private String street;
-    @Column(nullable = false)
-    private String buildingNumber;
-    private String flatNumber;
-    @Column(nullable = false)
-    private String phoneNumber1;
-    private String phoneNumber2;
-    @OneToOne
-    @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)
-    private UserEntity user;
 }

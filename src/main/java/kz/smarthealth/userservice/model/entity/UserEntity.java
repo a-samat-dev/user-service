@@ -15,7 +15,7 @@ import java.util.UUID;
 
 /**
  * Entity represents user
- *
+ * <p>
  * Created by Samat Abibulla 5/10/22
  */
 @Entity
@@ -30,12 +30,45 @@ public class UserEntity {
     @GeneratedValue(generator = "UUID")
     @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
     private UUID id;
+
+    @Column(nullable = false, unique = true)
+    private String email;
+
+    @Column(nullable = false)
+    private String password;
+
+    @Column(nullable = false)
+    private String name;
+
+    private String lastName;
+
+    private LocalDate birthDate;
+
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "contact_id", referencedColumnName = "id", nullable = false)
+    private ContactEntity contact;
+
+    private Short doctorTypeId;
+
+    private String about;
+
+    @Column
+    private String refreshToken;
+
+    @ManyToMany
+    @JoinTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id"))
+    private Set<RoleEntity> roles = new HashSet<>();
+
     @Column(nullable = false)
     protected OffsetDateTime createdAt;
+
     @Column(nullable = false)
     protected OffsetDateTime updatedAt;
+
     @Column(nullable = false)
     protected String createdBy;
+
     @Column(nullable = false)
     protected String updatedBy;
 
@@ -46,24 +79,4 @@ public class UserEntity {
         }
         this.updatedAt = OffsetDateTime.now();
     }
-
-    @Column(nullable = false, unique = true)
-    private String email;
-    @Column(nullable = false)
-    private String password;
-    @Column(nullable = false)
-    private String name;
-    private String lastName;
-    private LocalDate birthDate;
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
-    private ContactEntity contact;
-    private Short doctorTypeId;
-    private String about;
-    @Column
-    private String refreshToken;
-
-    @ManyToMany
-    @JoinTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "role_id"))
-    private Set<RoleEntity> roles = new HashSet<>();
 }

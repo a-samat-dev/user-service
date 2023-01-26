@@ -13,6 +13,21 @@ values (3, 'ROLE_DOCTOR');
 insert into roles
 values (4, 'ROLE_PATIENT');
 
+create table if not exists contacts
+(
+    id              uuid primary key,
+    created_at      timestamp with time zone,
+    updated_at      timestamp with time zone,
+    created_by      varchar(155) not null,
+    updated_by      varchar(155) not null,
+    city_id         smallint     not null,
+    street          varchar(155),
+    building_number varchar(155),
+    flat_number     varchar(155),
+    phone_number1   varchar(155) not null,
+    phone_number2   varchar(155)
+);
+
 create table if not exists users
 (
     id             uuid primary key,
@@ -26,6 +41,7 @@ create table if not exists users
     last_name      varchar(155),
     birth_date     date,
     doctor_type_id smallint,
+    contact_id uuid not null references contacts(id),
     about          varchar(255),
     refresh_token  varchar
 );
@@ -34,20 +50,4 @@ create table if not exists user_roles
 (
     user_id uuid     not null references users (id),
     role_id smallint not null references roles (id)
-);
-
-create table if not exists contacts
-(
-    id              uuid primary key,
-    created_at      timestamp with time zone,
-    updated_at      timestamp with time zone,
-    created_by      varchar(155) not null,
-    updated_by      varchar(155) not null,
-    user_id         uuid         not null references users (id),
-    city_id         smallint     not null,
-    street          varchar(155),
-    building_number varchar(155),
-    flat_number     varchar(155),
-    phone_number1   varchar(155) not null,
-    phone_number2   varchar(155)
 );

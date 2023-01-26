@@ -53,6 +53,8 @@ class UserServiceTest {
     private PasswordEncoder passwordEncoder;
     @Mock
     private JwtUtils jwtUtils;
+    @Mock
+    private UserIndexService userIndexService;
     @InjectMocks
     private UserService underTest;
 
@@ -137,6 +139,7 @@ class UserServiceTest {
         UserDTO createdUserDTO = underTest.createUser(userDTO);
         // then
 
+        verify(userIndexService).indexUser(createdUserDTO);
         assertEquals(userDTO.getEmail(), createdUserDTO.getEmail());
         assertNotNull(userDTO.getPassword());
         assertEquals(userDTO.getName(), createdUserDTO.getName());
