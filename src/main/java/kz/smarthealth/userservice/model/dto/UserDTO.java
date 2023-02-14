@@ -10,10 +10,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Transient;
-import org.springframework.data.elasticsearch.annotations.DateFormat;
-import org.springframework.data.elasticsearch.annotations.Document;
-import org.springframework.data.elasticsearch.annotations.Field;
-import org.springframework.data.elasticsearch.annotations.FieldType;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import javax.validation.Valid;
@@ -43,18 +39,15 @@ import static kz.smarthealth.userservice.util.AppConstants.DEFAULT_OFFSET_DATE_T
 @User
 @NoArgsConstructor
 @AllArgsConstructor
-@Document(indexName = "users")
 public class UserDTO {
 
     @JsonProperty(access = READ_ONLY)
     @Id
-    @Field(type = FieldType.Keyword)
     private UUID id;
 
     @Email(message = "Email is not valid")
     @NotEmpty(message = "Email must be provided")
     @Size(max = 155, message = "Email max length = 255 characters")
-    @Field(type = FieldType.Text)
     private String email;
 
     @Password
@@ -64,11 +57,9 @@ public class UserDTO {
 
     @NotEmpty(message = "Name must be provided")
     @Size(max = 155, message = "Name max length = 155 characters")
-    @Field(type = FieldType.Text)
     private String name;
 
     @Size(max = 155, message = "Last name max length = 155 characters")
-    @Field(type = FieldType.Text)
     private String lastName;
 
     @DateTimeFormat(pattern = DEFAULT_DATE)
@@ -87,12 +78,10 @@ public class UserDTO {
     @NotEmpty(message = "User roles must be provided")
     private Set<String> roles = new HashSet<>();
 
-    @Field(type = FieldType.Date, format = {DateFormat.basic_date_time})
     @JsonProperty(access = READ_ONLY)
     @JsonFormat(shape = STRING, pattern = DEFAULT_OFFSET_DATE_TIME_FORMAT)
     private OffsetDateTime createdAt;
 
-    @Field(type = FieldType.Date, format = {DateFormat.basic_date_time})
     @JsonFormat(shape = STRING, pattern = DEFAULT_OFFSET_DATE_TIME_FORMAT)
     @JsonProperty(access = READ_ONLY)
     private OffsetDateTime updatedAt;

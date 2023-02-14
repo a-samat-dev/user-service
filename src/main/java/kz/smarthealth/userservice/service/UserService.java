@@ -8,7 +8,6 @@ import kz.smarthealth.userservice.model.entity.RoleEntity;
 import kz.smarthealth.userservice.model.entity.UserEntity;
 import kz.smarthealth.userservice.repository.RoleRepository;
 import kz.smarthealth.userservice.repository.UserRepository;
-import kz.smarthealth.userservice.repository.elasticsearch.UserIndexRepository;
 import kz.smarthealth.userservice.security.JwtUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,8 +44,6 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtils jwtUtils;
 
-    private final UserIndexService userIndexService;
-
     /**
      * Checks if email is already in use
      *
@@ -59,26 +56,12 @@ public class UserService {
     }
 
     /**
-     * Creates new user by saving user in RDBMS first, and indexing user in elasticsearch
+     * Creates new user
      *
      * @param userDTO user information to be created
      * @return newly created user
      */
     public UserDTO createUser(UserDTO userDTO) {
-        userDTO = saveUser(userDTO);
-        userIndexService.indexUser(userDTO);
-
-        return userDTO;
-    }
-
-    /**
-     * Saves user in RDBMS
-     *
-     * @param userDTO new user
-     * @return created user
-     */
-    @Transactional
-    private UserDTO saveUser(UserDTO userDTO) {
         validateEmail(userDTO.getEmail());
         UserEntity userEntity = modelMapper.map(userDTO, UserEntity.class);
         userEntity.setCreatedBy(userEntity.getEmail());

@@ -35,7 +35,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * Integration tests for {@link UserController}
- * <p>
+ *
  * Created by Samat Abibulla on 11/9/2022
  */
 @SpringBootTest
