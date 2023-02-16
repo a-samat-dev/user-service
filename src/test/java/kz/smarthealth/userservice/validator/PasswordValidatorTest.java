@@ -48,72 +48,40 @@ class PasswordValidatorTest {
 
     @Test
     void isValid_returnsFalse_whenPasswordLessThenMinCharacters() {
-        // given
-        String password = "Aa1234!";
-        when(constraintValidatorContext.buildConstraintViolationWithTemplate(any())).thenReturn(constraintViolationBuilder);
-        when(constraintViolationBuilder.addConstraintViolation()).thenReturn(constraintValidatorContext);
-        // when
-        boolean isValid = underTest.isValid(password, constraintValidatorContext);
-        // then
-        assertFalse(isValid);
+        runTestWithNonNullInvalidCase("Aa1234!");
     }
 
     @Test
     void isValid_returnsFalse_whenPasswordMoreThenMaxCharacters() {
-        // given
-        String password = "Aa1234!1234567890";
-        when(constraintValidatorContext.buildConstraintViolationWithTemplate(any())).thenReturn(constraintViolationBuilder);
-        when(constraintViolationBuilder.addConstraintViolation()).thenReturn(constraintValidatorContext);
-        // when
-        boolean isValid = underTest.isValid(password, constraintValidatorContext);
-        // then
-        assertFalse(isValid);
+        runTestWithNonNullInvalidCase("Aa1234!1234567890");
     }
 
     @Test
     void isValid_returnsFalse_whenPasswordDoesNotContainUpperCaseCharacter() {
-        // given
-        String password = "aa12345!";
-        when(constraintValidatorContext.buildConstraintViolationWithTemplate(any())).thenReturn(constraintViolationBuilder);
-        when(constraintViolationBuilder.addConstraintViolation()).thenReturn(constraintValidatorContext);
-        // when
-        boolean isValid = underTest.isValid(password, constraintValidatorContext);
-        // then
-        assertFalse(isValid);
+        runTestWithNonNullInvalidCase("aa12345!");
     }
 
     @Test
     void isValid_returnsFalse_whenPasswordDoesNotContainLowerCaseCharacter() {
-        // given
-        String password = "AA12345!";
-        when(constraintValidatorContext.buildConstraintViolationWithTemplate(any())).thenReturn(constraintViolationBuilder);
-        when(constraintViolationBuilder.addConstraintViolation()).thenReturn(constraintValidatorContext);
-        // when
-        boolean isValid = underTest.isValid(password, constraintValidatorContext);
-        // then
-        assertFalse(isValid);
+        runTestWithNonNullInvalidCase("AA12345!");
     }
 
     @Test
     void isValid_returnsFalse_whenPasswordDoesNotContainDigit() {
-        // given
-        String password = "AAAAAAA!";
-        when(constraintValidatorContext.buildConstraintViolationWithTemplate(any())).thenReturn(constraintViolationBuilder);
-        when(constraintViolationBuilder.addConstraintViolation()).thenReturn(constraintValidatorContext);
-        // when
-        boolean isValid = underTest.isValid(password, constraintValidatorContext);
-        // then
-        assertFalse(isValid);
+        runTestWithNonNullInvalidCase("AAAAAAA!");
     }
 
     @Test
     void isValid_returnsFalse_whenPasswordDoesNotContainSpecialCharacter() {
+        runTestWithNonNullInvalidCase("AA123456");
+    }
+
+    private void runTestWithNonNullInvalidCase(String invalidPassword) {
         // given
-        String password = "AA123456";
         when(constraintValidatorContext.buildConstraintViolationWithTemplate(any())).thenReturn(constraintViolationBuilder);
         when(constraintViolationBuilder.addConstraintViolation()).thenReturn(constraintValidatorContext);
         // when
-        boolean isValid = underTest.isValid(password, constraintValidatorContext);
+        boolean isValid = underTest.isValid(invalidPassword, constraintValidatorContext);
         // then
         assertFalse(isValid);
     }

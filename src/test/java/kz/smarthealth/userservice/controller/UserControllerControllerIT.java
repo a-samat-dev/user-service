@@ -213,9 +213,7 @@ class UserControllerControllerIT {
         requestBody = requestBody.replaceFirst("\"id\":null", "\"password\":\"" + TEST_PASSWORD + "\"");
         // when
         MvcResult mvcResult = this.mockMvc.perform(MockMvcRequestBuilders.post("/api/v1/users/sign-up")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(requestBody)
-                        .characterEncoding("utf-8"))
+                        .contentType(MediaType.APPLICATION_JSON).content(requestBody).characterEncoding("utf-8"))
                 .andExpect(status().isCreated()).andReturn();
         // then
         UserDTO createdUserDTO = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), UserDTO.class);
@@ -239,22 +237,7 @@ class UserControllerControllerIT {
         assertEquals(TEST_PHONE_NUMBER_1, createdUserDTO.getContact().getPhoneNumber1());
         assertEquals(TEST_PHONE_NUMBER_2, createdUserDTO.getContact().getPhoneNumber2());
 
-        assertNotNull(userDTOMap.get("id"));
-        assertNotNull(userDTOMap.get("createdAt"));
-        assertNotNull(userDTOMap.get("createdBy"));
-        assertNotNull(userDTOMap.get("updatedAt"));
-        assertNotNull(userDTOMap.get("updatedBy"));
-
-        try {
-            Map<String, Object> contactDTOMap = (Map<String, Object>) userDTOMap.get("contact");
-            assertNotNull(contactDTOMap.get("id"));
-            assertNotNull(contactDTOMap.get("createdAt"));
-            assertNotNull(contactDTOMap.get("createdBy"));
-            assertNotNull(contactDTOMap.get("updatedAt"));
-            assertNotNull(contactDTOMap.get("updatedBy"));
-        } catch (ClassCastException ex) {
-            fail();
-        }
+        assertSystemFields(userDTOMap);
     }
 
     @Test
@@ -367,6 +350,10 @@ class UserControllerControllerIT {
         assertEquals(userEntity.getContact().getPhoneNumber1(), userDTO.getContact().getPhoneNumber1());
         assertEquals(userEntity.getContact().getPhoneNumber2(), userDTO.getContact().getPhoneNumber2());
 
+        assertSystemFields(userDTOMap);
+    }
+
+    private static void assertSystemFields(Map<String, Object> userDTOMap) {
         assertNotNull(userDTOMap.get("id"));
         assertNotNull(userDTOMap.get("createdAt"));
         assertNotNull(userDTOMap.get("createdBy"));

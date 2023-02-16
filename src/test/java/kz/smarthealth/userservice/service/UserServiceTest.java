@@ -4,7 +4,6 @@ import kz.smarthealth.userservice.exception.CustomException;
 import kz.smarthealth.userservice.model.RoleEnum;
 import kz.smarthealth.userservice.model.dto.ContactDTO;
 import kz.smarthealth.userservice.model.dto.LoginRequestDTO;
-import kz.smarthealth.userservice.model.dto.PatientDTO;
 import kz.smarthealth.userservice.model.dto.UserDTO;
 import kz.smarthealth.userservice.model.entity.RoleEntity;
 import kz.smarthealth.userservice.model.entity.UserEntity;
@@ -13,7 +12,9 @@ import kz.smarthealth.userservice.repository.UserRepository;
 import kz.smarthealth.userservice.security.JwtUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.*;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -55,9 +56,6 @@ class UserServiceTest {
     private JwtUtils jwtUtils;
     @InjectMocks
     private UserService underTest;
-
-    @Captor
-    private ArgumentCaptor<Set<PatientDTO>> patientDTOArgumentCaptor;
 
     @Test
     void isEmailAvailable_returnsTrue_whenEmailIsNotInUse() {
