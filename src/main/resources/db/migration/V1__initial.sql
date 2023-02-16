@@ -37,11 +37,11 @@ create table if not exists users
     updated_by     varchar(155) not null,
     email          varchar(155) not null unique,
     password       varchar(255) not null,
-    name           varchar(155)  not null,
+    name           varchar(155) not null,
     last_name      varchar(155),
     birth_date     date,
     doctor_type_id smallint,
-    contact_id uuid not null references contacts(id),
+    contact_id     uuid references contacts (id),
     about          varchar(255),
     refresh_token  varchar
 );

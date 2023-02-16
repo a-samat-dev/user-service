@@ -30,10 +30,8 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 .collect(toMap(FieldError::getField, DefaultMessageSourceResolvable::getDefaultMessage));
         ErrorResponseDTO errorResponseDTO = ErrorResponseDTO.builder()
                 .dateTime(OffsetDateTime.now())
-                .status(status)
                 .code(status.value())
-                .error("Validation Error")
-                .message(ex.getMessage())
+                .message("Validation Error")
                 .invalidFields(invalidFields)
                 .build();
 
@@ -44,12 +42,10 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     public ResponseEntity<ErrorResponseDTO> handleCustomException(CustomException ex) {
         ErrorResponseDTO errorResponseDTO = ErrorResponseDTO.builder()
                 .dateTime(OffsetDateTime.now())
-                .status(ex.getStatus())
-                .code(ex.getStatus().value())
-                .error(ex.getError())
+                .code(ex.getHttpStatus().value())
                 .message(ex.getMessage())
                 .build();
 
-        return new ResponseEntity<>(errorResponseDTO, ex.getStatus());
+        return new ResponseEntity<>(errorResponseDTO, ex.getHttpStatus());
     }
 }

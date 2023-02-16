@@ -48,15 +48,4 @@ public class UserController {
     public UserDTO getUserById(@PathVariable UUID id) {
         return userService.getUserById(id);
     }
-
-    /**
-     * Delete user by id
-     *
-     * @param id of user
-     */
-    @DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteUserById(@PathVariable UUID id) {
-        userService.deleteUserById(id);
-    }
 }

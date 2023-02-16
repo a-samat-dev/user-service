@@ -1,6 +1,8 @@
 package kz.smarthealth.userservice.service;
 
 import kz.smarthealth.userservice.exception.CustomException;
+import kz.smarthealth.userservice.model.RoleEnum;
+import kz.smarthealth.userservice.model.dto.ContactDTO;
 import kz.smarthealth.userservice.model.dto.LoginRequestDTO;
 import kz.smarthealth.userservice.model.dto.LoginResponseDTO;
 import kz.smarthealth.userservice.model.dto.UserDTO;
@@ -87,8 +89,7 @@ public class UserService {
         userRepository.findByEmail(email)
                 .ifPresent(entity -> {
                     throw CustomException.builder()
-                            .status(HttpStatus.BAD_REQUEST)
-                            .error("Invalid email address")
+                            .httpStatus(HttpStatus.BAD_REQUEST)
                             .message(EMAIL_IN_USE.getText(email))
                             .build();
                 });
@@ -100,15 +101,14 @@ public class UserService {
      * @param roles set of role names
      * @return set of role entity
      */
-    private Set<RoleEntity> getUserRoles(Set<String> roles) {
+    private Set<RoleEntity> getUserRoles(Set<RoleEnum> roles) {
         Set<RoleEntity> roleEntitySet = new HashSet<>(roles.size());
 
         roles.forEach(role -> roleEntitySet.add(
-                roleRepository.findByName(role)
+                roleRepository.findByName(role.name())
                         .orElseThrow(() -> CustomException.builder()
-                                .status(HttpStatus.BAD_REQUEST)
-                                .error("Role not found")
-                                .message(ROLE_BY_NAME_NOT_FOUND.getText(role))
+                                .httpStatus(HttpStatus.BAD_REQUEST)
+                                .message(ROLE_BY_NAME_NOT_FOUND.getText(role.name()))
                                 .build())));
 
         return roleEntitySet;
@@ -126,8 +126,7 @@ public class UserService {
                 loginRequestDTO.getEmail(), loginRequestDTO.getPassword()));
         UserEntity userEntity = userRepository.findByEmail(loginRequestDTO.getEmail())
                 .orElseThrow(() -> CustomException.builder()
-                        .status(HttpStatus.NOT_FOUND)
-                        .error("User not found")
+                        .httpStatus(HttpStatus.NOT_FOUND)
                         .message(USER_BY_EMAIL_NOT_FOUND.getText(loginRequestDTO.getEmail()))
                         .build());
         String token = jwtUtils.generateJwtToken(authenticate);
@@ -136,7 +135,7 @@ public class UserService {
         userRepository.save(userEntity);
         UserDTO userDTO = modelMapper.map(userEntity, UserDTO.class);
         userDTO.setRoles(userEntity.getRoles().stream()
-                .map(RoleEntity::getName)
+                .map(entity -> RoleEnum.valueOf(entity.getName()))
                 .collect(Collectors.toSet()));
 
         return LoginResponseDTO.builder()
@@ -156,25 +155,15 @@ public class UserService {
     public UserDTO getUserById(UUID id) {
         UserEntity userEntity = userRepository.findById(id)
                 .orElseThrow(() -> CustomException.builder()
-                        .status(HttpStatus.NOT_FOUND)
-                        .error(HttpStatus.NOT_FOUND.name())
+                        .httpStatus(HttpStatus.NOT_FOUND)
                         .message(USER_BY_ID_NOT_FOUND.getText(id.toString()))
                         .build());
         UserDTO userDTO = modelMapper.map(userEntity, UserDTO.class);
-        userDTO.setRoles(new HashSet<>(userEntity.getRoles().size()));
-        userEntity.getRoles().forEach(role -> userDTO.getRoles().add(role.getName()));
+        userDTO.setContact(modelMapper.map(userEntity.getContact(), ContactDTO.class));
+        userDTO.setRoles(userEntity.getRoles().stream()
+                .map(entity -> RoleEnum.valueOf(entity.getName()))
+                .collect(Collectors.toSet()));
 
         return userDTO;
-    }
-
-    /**
-     * Delete user by id
-     *
-     * @param id of user
-     */
-    @Transactional
-    public void deleteUserById(UUID id) {
-        getUserById(id);
-        userRepository.deleteById(id);
     }
 }

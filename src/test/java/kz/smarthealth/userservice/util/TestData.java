@@ -1,6 +1,6 @@
 package kz.smarthealth.userservice.util;
 
-import kz.smarthealth.userservice.model.UserType;
+import kz.smarthealth.userservice.model.RoleEnum;
 import kz.smarthealth.userservice.model.dto.ContactDTO;
 import kz.smarthealth.userservice.model.dto.UserDTO;
 import kz.smarthealth.userservice.model.entity.ContactEntity;
@@ -8,7 +8,6 @@ import kz.smarthealth.userservice.model.entity.RoleEntity;
 import kz.smarthealth.userservice.model.entity.UserEntity;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.Set;
 
@@ -22,7 +21,7 @@ public final class TestData {
     private TestData() {
     }
 
-    public static final String TEST_EXISTING_EMAIL = "test@gmail.com";
+    public static final String TEST_EXISTING_EMAIL = "org@test.com";
     public static final String TEST_EMAIL = "test1@gmail.com";
     public static final String TEST_PASSWORD = "Qwerty1!";
     public static final String TEST_NAME = "first name";
@@ -37,9 +36,8 @@ public final class TestData {
     public static final String TEST_FLAT_NUMBER = "flat number";
     public static final String TEST_PHONE_NUMBER_1 = "phone number 1";
     public static final String TEST_PHONE_NUMBER_2 = "phone number 2";
-    public static final String TEST_ROLE_ORGANIZATION = "ORGANIZATION";
-    public static final String TEST_ROLE_DOCTOR = "DOCTOR";
-    public static final String TEST_ROLE_PATIENT = "PATIENT";
+    public static final String TEST_ROLE_ORGANIZATION = "ROLE_ORGANIZATION";
+    public static final String TEST_ROLE_DOCTOR = "ROLE_DOCTOR";
 
     public static UserDTO getUserDTO() {
         return UserDTO.builder()
@@ -51,7 +49,7 @@ public final class TestData {
                 .doctorTypeId(TEST_DOCTOR_TYPE)
                 .about(TEST_ABOUT)
                 .contact(getContactDTO())
-                .roles(Set.of(TEST_ROLE_ORGANIZATION))
+                .roles(Set.of(RoleEnum.ROLE_ORGANIZATION))
                 .build();
     }
 
@@ -81,7 +79,7 @@ public final class TestData {
                 .contact(getContactEntity())
                 .roles(Set.of(RoleEntity.builder()
                         .id((short) 1)
-                        .name(UserType.PATIENT.name())
+                        .name(RoleEnum.ROLE_PATIENT.name())
                         .build()))
                 .build();
         userEntity.getContact().setUser(userEntity);

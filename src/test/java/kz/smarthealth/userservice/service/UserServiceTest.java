@@ -1,6 +1,7 @@
 package kz.smarthealth.userservice.service;
 
 import kz.smarthealth.userservice.exception.CustomException;
+import kz.smarthealth.userservice.model.RoleEnum;
 import kz.smarthealth.userservice.model.dto.ContactDTO;
 import kz.smarthealth.userservice.model.dto.LoginRequestDTO;
 import kz.smarthealth.userservice.model.dto.PatientDTO;
@@ -30,7 +31,6 @@ import static kz.smarthealth.userservice.util.MessageSource.USER_BY_ID_NOT_FOUND
 import static kz.smarthealth.userservice.util.TestData.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -103,7 +103,7 @@ class UserServiceTest {
         UserDTO userDTO = UserDTO.builder()
                 .email(TEST_EMAIL)
                 .contact(contactDTO)
-                .roles(Set.of(TEST_ROLE_ORGANIZATION))
+                .roles(Set.of(RoleEnum.ROLE_ORGANIZATION))
                 .build();
         when(userRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.of(UserEntity.builder()
                 .email(TEST_EMAIL)
@@ -123,7 +123,7 @@ class UserServiceTest {
         UserDTO userDTO = getUserDTO();
         UserEntity userEntity = modelMapper.map(userDTO, UserEntity.class);
         userEntity.setId(UUID.randomUUID());
-        userDTO.setRoles(Set.of(TEST_ROLE_DOCTOR));
+        userDTO.setRoles(Set.of(RoleEnum.ROLE_DOCTOR));
         when(userRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.of(UserEntity.builder()
                 .email(TEST_EMAIL)
                 .build()));
@@ -144,7 +144,7 @@ class UserServiceTest {
         assertEquals(userDTO.getBirthDate(), createdUserDTO.getBirthDate());
         assertEquals(userDTO.getDoctorTypeId(), createdUserDTO.getDoctorTypeId());
         assertEquals(userDTO.getAbout(), createdUserDTO.getAbout());
-        assertEquals(TEST_ROLE_DOCTOR, createdUserDTO.getRoles().iterator().next());
+        assertEquals(RoleEnum.ROLE_DOCTOR, createdUserDTO.getRoles().iterator().next());
         assertEquals(userDTO.getContact().getCityId(), createdUserDTO.getContact().getCityId());
         assertEquals(userDTO.getContact().getStreet(), createdUserDTO.getContact().getStreet());
         assertEquals(userDTO.getContact().getBuildingNumber(), createdUserDTO.getContact().getBuildingNumber());
@@ -229,29 +229,5 @@ class UserServiceTest {
         assertEquals(userEntity.getContact().getFlatNumber(), userDTO.getContact().getFlatNumber());
         assertEquals(userEntity.getContact().getPhoneNumber1(), userDTO.getContact().getPhoneNumber1());
         assertEquals(userEntity.getContact().getPhoneNumber2(), userDTO.getContact().getPhoneNumber2());
-    }
-
-    @Test
-    void deleteUserById_throwsError_whenUserNotFound() {
-        // given
-        UUID invalidId = UUID.randomUUID();
-        when(userRepository.findById(invalidId)).thenReturn(Optional.empty());
-        // when
-        CustomException exception = assertThrows(CustomException.class,
-                () -> underTest.deleteUserById(invalidId));
-        // then
-        assertEquals(USER_BY_ID_NOT_FOUND.getText(invalidId.toString()), exception.getMessage());
-    }
-
-    @Test
-    void deleteUserById_deletesUser() {
-        // given
-        UserEntity userEntity = getUserEntity();
-        UUID userId = UUID.randomUUID();
-        when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
-        // when
-        underTest.deleteUserById(userId);
-        // then
-        verify(userRepository).deleteById(userId);
     }
 }

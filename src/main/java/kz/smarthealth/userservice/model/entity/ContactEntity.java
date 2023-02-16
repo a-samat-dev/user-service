@@ -1,9 +1,6 @@
 package kz.smarthealth.userservice.model.entity;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
@@ -44,7 +41,8 @@ public class ContactEntity {
 
     private String phoneNumber2;
 
-    @OneToOne(mappedBy = "contact")
+    @OneToOne(mappedBy = "contact", fetch = FetchType.LAZY)
+    @ToString.Exclude
     private UserEntity user;
 
     @Column(nullable = false)

@@ -2,6 +2,7 @@ package kz.smarthealth.userservice.model.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import kz.smarthealth.userservice.model.RoleEnum;
 import kz.smarthealth.userservice.validator.Password;
 import kz.smarthealth.userservice.validator.User;
 import lombok.AllArgsConstructor;
@@ -9,7 +10,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.annotation.Transient;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import javax.validation.Valid;
@@ -41,8 +41,8 @@ import static kz.smarthealth.userservice.util.AppConstants.DEFAULT_OFFSET_DATE_T
 @AllArgsConstructor
 public class UserDTO {
 
-    @JsonProperty(access = READ_ONLY)
     @Id
+    @JsonProperty(access = READ_ONLY)
     private UUID id;
 
     @Email(message = "Email is not valid")
@@ -52,7 +52,6 @@ public class UserDTO {
 
     @Password
     @JsonProperty(access = WRITE_ONLY)
-    @Transient
     private String password;
 
     @NotEmpty(message = "Name must be provided")
@@ -76,7 +75,7 @@ public class UserDTO {
     private ContactDTO contact;
 
     @NotEmpty(message = "User roles must be provided")
-    private Set<String> roles = new HashSet<>();
+    private Set<RoleEnum> roles = new HashSet<>();
 
     @JsonProperty(access = READ_ONLY)
     @JsonFormat(shape = STRING, pattern = DEFAULT_OFFSET_DATE_TIME_FORMAT)
