@@ -2,6 +2,12 @@ package kz.smarthealth.userservice.model.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import kz.smarthealth.commonlogic.util.AppConstants;
 import kz.smarthealth.userservice.model.RoleEnum;
 import kz.smarthealth.userservice.validator.Password;
 import kz.smarthealth.userservice.validator.User;
@@ -9,14 +15,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.Id;
 import org.springframework.format.annotation.DateTimeFormat;
 
-import javax.validation.Valid;
-import javax.validation.constraints.Email;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.HashSet;
@@ -26,8 +26,6 @@ import java.util.UUID;
 import static com.fasterxml.jackson.annotation.JsonFormat.Shape.STRING;
 import static com.fasterxml.jackson.annotation.JsonProperty.Access.READ_ONLY;
 import static com.fasterxml.jackson.annotation.JsonProperty.Access.WRITE_ONLY;
-import static kz.smarthealth.userservice.util.AppConstants.DEFAULT_DATE;
-import static kz.smarthealth.userservice.util.AppConstants.DEFAULT_OFFSET_DATE_TIME_FORMAT;
 
 /**
  * Data transfer object for user
@@ -41,7 +39,6 @@ import static kz.smarthealth.userservice.util.AppConstants.DEFAULT_OFFSET_DATE_T
 @AllArgsConstructor
 public class UserDTO {
 
-    @Id
     @JsonProperty(access = READ_ONLY)
     private UUID id;
 
@@ -61,8 +58,8 @@ public class UserDTO {
     @Size(max = 155, message = "Last name max length = 155 characters")
     private String lastName;
 
-    @DateTimeFormat(pattern = DEFAULT_DATE)
-    @JsonFormat(shape = STRING, pattern = DEFAULT_DATE)
+    @DateTimeFormat(pattern = AppConstants.DEFAULT_DATE)
+    @JsonFormat(shape = STRING, pattern = AppConstants.DEFAULT_DATE)
     private LocalDate birthDate;
 
     private Short doctorTypeId;
@@ -78,10 +75,10 @@ public class UserDTO {
     private Set<RoleEnum> roles = new HashSet<>();
 
     @JsonProperty(access = READ_ONLY)
-    @JsonFormat(shape = STRING, pattern = DEFAULT_OFFSET_DATE_TIME_FORMAT)
+    @JsonFormat(shape = STRING, pattern = AppConstants.DEFAULT_OFFSET_DATE_TIME_FORMAT)
     private OffsetDateTime createdAt;
 
-    @JsonFormat(shape = STRING, pattern = DEFAULT_OFFSET_DATE_TIME_FORMAT)
+    @JsonFormat(shape = STRING, pattern = AppConstants.DEFAULT_OFFSET_DATE_TIME_FORMAT)
     @JsonProperty(access = READ_ONLY)
     private OffsetDateTime updatedAt;
 

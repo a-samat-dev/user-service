@@ -1,6 +1,6 @@
 package kz.smarthealth.userservice.service;
 
-import kz.smarthealth.userservice.exception.CustomException;
+import kz.smarthealth.commonlogic.exception.CustomException;
 import kz.smarthealth.userservice.model.RoleEnum;
 import kz.smarthealth.userservice.model.dto.ContactDTO;
 import kz.smarthealth.userservice.model.dto.LoginRequestDTO;

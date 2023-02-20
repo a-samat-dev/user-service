@@ -1,12 +1,12 @@
 package kz.smarthealth.userservice.model.entity;
 
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.GenericGenerator;
 
-import javax.persistence.*;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.HashSet;
@@ -15,7 +15,7 @@ import java.util.UUID;
 
 /**
  * Entity represents user
- * <p>
+ *
  * Created by Samat Abibulla 5/10/22
  */
 @Entity

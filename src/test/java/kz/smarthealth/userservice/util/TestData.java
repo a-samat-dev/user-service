@@ -13,7 +13,7 @@ import java.util.Set;
 
 /**
  * Singleton class that holds user test data
- * <p>
+ *
  * Created by Samat Abibulla on 2022-10-13
  */
 public final class TestData {
