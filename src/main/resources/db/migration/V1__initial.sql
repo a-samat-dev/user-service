@@ -35,6 +35,7 @@ create table if not exists users
     updated_at     timestamp with time zone,
     created_by     varchar(155) not null,
     updated_by     varchar(155) not null,
+    deleted_at     timestamp with time zone,
     email          varchar(155) not null unique,
     password       varchar(255) not null,
     name           varchar(155) not null,

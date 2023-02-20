@@ -72,6 +72,9 @@ public class UserEntity {
     @Column(nullable = false)
     protected String updatedBy;
 
+    @Column
+    protected OffsetDateTime deletedAt;
+
     @PrePersist
     private void prePersist() {
         if (this.createdAt == null) {

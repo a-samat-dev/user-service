@@ -12,6 +12,7 @@ import kz.smarthealth.userservice.repository.UserRepository;
 import kz.smarthealth.userservice.security.JwtUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
@@ -23,6 +24,7 @@ import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.LocalDate;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -32,6 +34,7 @@ import static kz.smarthealth.userservice.util.MessageSource.USER_BY_ID_NOT_FOUND
 import static kz.smarthealth.userservice.util.TestData.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -227,5 +230,76 @@ class UserServiceTest {
         assertEquals(userEntity.getContact().getFlatNumber(), userDTO.getContact().getFlatNumber());
         assertEquals(userEntity.getContact().getPhoneNumber1(), userDTO.getContact().getPhoneNumber1());
         assertEquals(userEntity.getContact().getPhoneNumber2(), userDTO.getContact().getPhoneNumber2());
+    }
+
+    @Test
+    void updateUserById_throwsError_whenUserNotFound() {
+        // given
+        UUID invalidId = UUID.randomUUID();
+        when(userRepository.findById(invalidId)).thenReturn(Optional.empty());
+        // when
+        CustomException exception = assertThrows(CustomException.class,
+                () -> underTest.updateUserById(invalidId, UserDTO.builder().build()));
+        // then
+        assertEquals(USER_BY_ID_NOT_FOUND.getText(invalidId.toString()), exception.getMessage());
+    }
+
+    @Test
+    void updateUserById_updatesUser() {
+        // given
+        ArgumentCaptor<UserEntity> argumentCaptor = ArgumentCaptor.forClass(UserEntity.class);
+        UserEntity userEntity = getUserEntity();
+        UUID id = UUID.randomUUID();
+        userEntity.setId(id);
+        UserDTO userDTO = UserDTO.builder()
+                .name("UpdatedName")
+                .lastName("UpdatedLastName")
+                .birthDate(LocalDate.of(2000, 1, 1))
+                .doctorTypeId((short) 2)
+                .about("UpdatedAbout")
+                .build();
+        when(userRepository.findById(id)).thenReturn(Optional.of(userEntity));
+        when(userRepository.save(any())).thenReturn(UserEntity.builder().build());
+        // when
+        UserDTO actualUserDTO = underTest.updateUserById(id, userDTO);
+        // then
+        verify(userRepository).save(argumentCaptor.capture());
+        UserEntity updatedUserEntity = argumentCaptor.getValue();
+
+        assertNotNull(actualUserDTO);
+        assertNotNull(updatedUserEntity);
+        assertEquals(userDTO.getName(), updatedUserEntity.getName());
+        assertEquals(userDTO.getLastName(), updatedUserEntity.getLastName());
+        assertEquals(userDTO.getBirthDate(), updatedUserEntity.getBirthDate());
+        assertEquals(userDTO.getDoctorTypeId(), updatedUserEntity.getDoctorTypeId());
+        assertEquals(userDTO.getAbout(), updatedUserEntity.getAbout());
+    }
+
+    @Test
+    void deleteUserById_throwsError_whenUserNotFound() {
+        // given
+        UUID invalidId = UUID.randomUUID();
+        when(userRepository.findById(invalidId)).thenReturn(Optional.empty());
+        // when
+        CustomException exception = assertThrows(CustomException.class,
+                () -> underTest.deleteUserById(invalidId));
+        // then
+        assertEquals(USER_BY_ID_NOT_FOUND.getText(invalidId.toString()), exception.getMessage());
+    }
+
+    @Test
+    void deleteUserById_deletesUser() {
+        // given
+        ArgumentCaptor<UserEntity> argumentCaptor = ArgumentCaptor.forClass(UserEntity.class);
+        UUID id = UUID.randomUUID();
+        when(userRepository.findById(id)).thenReturn(Optional.of(UserEntity.builder().build()));
+        // when
+        underTest.deleteUserById(id);
+        // then
+        verify(userRepository).save(argumentCaptor.capture());
+        UserEntity userEntity = argumentCaptor.getValue();
+
+        assertNotNull(userEntity);
+        assertNotNull(userEntity.getDeletedAt());
     }
 }

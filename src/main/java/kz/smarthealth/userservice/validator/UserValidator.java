@@ -1,10 +1,9 @@
 package kz.smarthealth.userservice.validator;
 
+import jakarta.validation.ConstraintValidator;
+import jakarta.validation.ConstraintValidatorContext;
 import kz.smarthealth.userservice.model.RoleEnum;
 import kz.smarthealth.userservice.model.dto.UserDTO;
-
-import javax.validation.ConstraintValidator;
-import javax.validation.ConstraintValidatorContext;
 
 /**
  * Validator class for user

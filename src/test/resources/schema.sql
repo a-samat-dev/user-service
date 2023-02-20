@@ -37,7 +37,8 @@ create table if not exists users
     created_at     timestamp with time zone,
     updated_at     timestamp with time zone,
     created_by     varchar(155) not null,
-    updated_by     varchar(155) not null
+    updated_by     varchar(155) not null,
+    deleted_at     timestamp with time zone
 );
 
 drop table if exists user_roles;

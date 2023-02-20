@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import kz.smarthealth.commonlogic.util.AppConstants;
 import kz.smarthealth.userservice.model.RoleEnum;
@@ -68,7 +67,6 @@ public class UserDTO {
     private String about;
 
     @Valid
-    @NotNull(message = "Contact must be provided")
     private ContactDTO contact;
 
     @NotEmpty(message = "User roles must be provided")

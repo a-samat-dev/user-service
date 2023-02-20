@@ -25,6 +25,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -92,10 +93,9 @@ class UserControllerControllerIT {
                 ErrorResponseDTO.class);
         Map<String, String> invalidFields = errorResponseDTO.getInvalidFields();
 
-        assertEquals(4, invalidFields.size());
+        assertEquals(3, invalidFields.size());
         assertTrue(invalidFields.containsKey("email"));
         assertTrue(invalidFields.containsKey("name"));
-        assertTrue(invalidFields.containsKey("contact"));
         assertTrue(invalidFields.containsKey("roles"));
     }
 
@@ -117,10 +117,9 @@ class UserControllerControllerIT {
                 ErrorResponseDTO.class);
         Map<String, String> invalidFields = errorResponseDTO.getInvalidFields();
 
-        assertEquals(5, invalidFields.size());
+        assertEquals(4, invalidFields.size());
         assertTrue(invalidFields.containsKey("email"));
         assertTrue(invalidFields.containsKey("name"));
-        assertTrue(invalidFields.containsKey("contact"));
         assertTrue(invalidFields.containsKey("birthDate"));
         assertTrue(invalidFields.containsKey("doctorTypeId"));
     }
@@ -143,10 +142,9 @@ class UserControllerControllerIT {
                 ErrorResponseDTO.class);
         Map<String, String> invalidFields = errorResponseDTO.getInvalidFields();
 
-        assertEquals(4, invalidFields.size());
+        assertEquals(3, invalidFields.size());
         assertTrue(invalidFields.containsKey("email"));
         assertTrue(invalidFields.containsKey("name"));
-        assertTrue(invalidFields.containsKey("contact"));
         assertTrue(invalidFields.containsKey("birthDate"));
     }
 
@@ -355,6 +353,94 @@ class UserControllerControllerIT {
         assertEquals(userEntity.getContact().getPhoneNumber2(), userDTO.getContact().getPhoneNumber2());
 
         assertSystemFields(userDTOMap);
+    }
+
+    @Test
+    void updateUserById_returnsNotFound_whenInvalidUserIdProvided() throws Exception {
+        // given
+        UserDTO userDTO = getUserDTO();
+        String requestBody = objectMapper.writeValueAsString(userDTO);
+        UUID userId = UUID.randomUUID();
+        // when
+        MvcResult mvcResult = this.mockMvc.perform(MockMvcRequestBuilders.put("/api/v1/users/" + userId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody)
+                        .characterEncoding("utf-8"))
+                .andExpect(status().isNotFound()).andReturn();
+        // then
+        ErrorResponseDTO errorResponseDTO = objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
+                ErrorResponseDTO.class);
+
+        assertNotNull(errorResponseDTO);
+        assertEquals(MessageSource.USER_BY_ID_NOT_FOUND.getText(userId.toString()), errorResponseDTO.getMessage());
+    }
+
+    @Test
+    void updateUserById_returnsUpdatedUser() throws Exception {
+        // given
+        UserEntity userEntity = getUserEntity();
+        userEntity = userRepository.save(userEntity);
+        UserDTO userDTO = UserDTO.builder()
+                .id(userEntity.getId())
+                .email(userEntity.getEmail())
+                .name("UpdatedName")
+                .lastName("UpdatedLastName")
+                .birthDate(LocalDate.of(2000, 1, 1))
+                .doctorTypeId((short) 2)
+                .roles(Set.of(RoleEnum.ROLE_DOCTOR))
+                .build();
+        String requestBody = objectMapper.writeValueAsString(userDTO);
+        // when
+        MvcResult mvcResult = this.mockMvc.perform(MockMvcRequestBuilders.put("/api/v1/users/"
+                                + userEntity.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody)
+                        .characterEncoding("utf-8"))
+                .andExpect(status().isOk()).andReturn();
+        // then
+        userRepository.deleteById(userEntity.getId());
+        UserDTO updatedUserDTO = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), UserDTO.class);
+        Map<String, Object> userDTOMap = objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
+                new TypeReference<>() {
+                });
+
+        assertNotNull(updatedUserDTO);
+        assertEquals(userDTO.getId().toString(), userDTOMap.get("id").toString());
+        assertEquals(userDTO.getName(), updatedUserDTO.getName());
+        assertEquals(userDTO.getLastName(), updatedUserDTO.getLastName());
+        assertEquals(userDTO.getBirthDate(), updatedUserDTO.getBirthDate());
+        assertEquals(userDTO.getDoctorTypeId(), updatedUserDTO.getDoctorTypeId());
+    }
+
+    @Test
+    void deleteUserById_returnsNotFound_whenInvalidUserIdProvided() throws Exception {
+        // given
+        UUID userId = UUID.randomUUID();
+        // when
+        MvcResult mvcResult = this.mockMvc.perform(MockMvcRequestBuilders.delete("/api/v1/users/" + userId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .characterEncoding("utf-8"))
+                .andExpect(status().isNotFound()).andReturn();
+        // then
+        ErrorResponseDTO errorResponseDTO = objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
+                ErrorResponseDTO.class);
+
+        assertNotNull(errorResponseDTO);
+        assertEquals(MessageSource.USER_BY_ID_NOT_FOUND.getText(userId.toString()), errorResponseDTO.getMessage());
+    }
+
+    @Test
+    void deleteUserById_deletesUser() throws Exception {
+        // given
+        UserEntity userEntity = getUserEntity();
+        userEntity = userRepository.save(userEntity);
+        // when
+        this.mockMvc.perform(MockMvcRequestBuilders.delete("/api/v1/users/" + userEntity.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .characterEncoding("utf-8"))
+                .andExpect(status().isNoContent()).andReturn();
+        // then
+        userRepository.deleteById(userEntity.getId());
     }
 
     private static void assertSystemFields(Map<String, Object> userDTOMap) {

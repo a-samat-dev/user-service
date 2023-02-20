@@ -7,6 +7,7 @@ import kz.smarthealth.userservice.model.dto.LoginResponseDTO;
 import kz.smarthealth.userservice.model.dto.UserDTO;
 import kz.smarthealth.userservice.service.UserService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
@@ -18,6 +19,7 @@ import java.util.UUID;
  *
  * Created by Samat Abibulla on 2023-02-20
  */
+@Slf4j
 @RestController
 @RequestMapping(value = "/api/v1/users", produces = AppConstants.JSON_UTF_8)
 @RequiredArgsConstructor
@@ -69,5 +71,30 @@ public class UserController {
     @GetMapping("/{id}")
     public UserDTO getUserById(@PathVariable UUID id) {
         return userService.getUserById(id);
+    }
+
+    /**
+     * Updates user by id
+     *
+     * @param id      user id
+     * @param userDTO user data
+     * @return updated user data
+     */
+    @PutMapping("/{id}")
+    public UserDTO updateUserById(@PathVariable UUID id, @RequestBody @Valid UserDTO userDTO) {
+        log.info("Incoming request to update user by id, id={}", id);
+        return userService.updateUserById(id, userDTO);
+    }
+
+    /**
+     * Deletes user by id
+     *
+     * @param id user id
+     */
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @DeleteMapping("/{id}")
+    public void deleteUserById(@PathVariable UUID id) {
+        log.info("Incoming request to delete user by id, id={}", id);
+        userService.deleteUserById(id);
     }
 }

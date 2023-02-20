@@ -13,6 +13,7 @@ import kz.smarthealth.userservice.repository.UserRepository;
 import kz.smarthealth.userservice.security.JwtUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -22,6 +23,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.OffsetDateTime;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -153,11 +155,7 @@ public class UserService {
      */
     @Transactional(readOnly = true)
     public UserDTO getUserById(UUID id) {
-        UserEntity userEntity = userRepository.findById(id)
-                .orElseThrow(() -> CustomException.builder()
-                        .httpStatus(HttpStatus.NOT_FOUND)
-                        .message(USER_BY_ID_NOT_FOUND.getText(id.toString()))
-                        .build());
+        UserEntity userEntity = findUserById(id);
         UserDTO userDTO = modelMapper.map(userEntity, UserDTO.class);
         userDTO.setContact(modelMapper.map(userEntity.getContact(), ContactDTO.class));
         userDTO.setRoles(userEntity.getRoles().stream()
@@ -165,5 +163,59 @@ public class UserService {
                 .collect(Collectors.toSet()));
 
         return userDTO;
+    }
+
+    /**
+     * Updates user by id
+     *
+     * @param id      user id
+     * @param userDTO user data
+     * @return updated user data
+     */
+    @Transactional
+    public UserDTO updateUserById(UUID id, UserDTO userDTO) {
+        UserEntity userEntity = findUserById(id);
+        if (!StringUtils.isBlank(userDTO.getName())) {
+            userEntity.setName(userDTO.getName());
+        }
+        if (userDTO.getBirthDate() != null) {
+            userEntity.setBirthDate(userDTO.getBirthDate());
+        }
+        if (userDTO.getDoctorTypeId() != null) {
+            userEntity.setDoctorTypeId(userDTO.getDoctorTypeId());
+        }
+        userEntity.setLastName(userDTO.getLastName());
+        userEntity.setAbout(userDTO.getAbout());
+        userEntity.setUpdatedBy(userEntity.getId().toString());
+        userEntity.setUpdatedAt(OffsetDateTime.now());
+        userEntity = userRepository.save(userEntity);
+
+        return modelMapper.map(userEntity, UserDTO.class);
+    }
+
+    /**
+     * Deletes user by id
+     *
+     * @param id user id
+     */
+    @Transactional
+    public void deleteUserById(UUID id) {
+        UserEntity userEntity = findUserById(id);
+        userEntity.setDeletedAt(OffsetDateTime.now());
+        userRepository.save(userEntity);
+    }
+
+    /**
+     * Retrieves user from DB
+     *
+     * @param id user id
+     * @return user data if exists by id
+     */
+    private UserEntity findUserById(UUID id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> CustomException.builder()
+                        .httpStatus(HttpStatus.NOT_FOUND)
+                        .message(USER_BY_ID_NOT_FOUND.getText(id.toString()))
+                        .build());
     }
 }
