@@ -57,6 +57,9 @@ public class ContactEntity {
     @Column(nullable = false)
     protected String updatedBy;
 
+    @Column(name = "deleted_at")
+    protected OffsetDateTime deletedAt;
+
     @PrePersist
     private void prePersist() {
         if (this.createdAt == null) {

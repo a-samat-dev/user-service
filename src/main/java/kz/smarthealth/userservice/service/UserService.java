@@ -1,10 +1,10 @@
 package kz.smarthealth.userservice.service;
 
+import kz.smarthealth.commonlogic.dto.RoleEnum;
 import kz.smarthealth.commonlogic.exception.CustomException;
-import kz.smarthealth.userservice.model.RoleEnum;
 import kz.smarthealth.userservice.model.dto.ContactDTO;
-import kz.smarthealth.userservice.model.dto.LoginRequestDTO;
-import kz.smarthealth.userservice.model.dto.LoginResponseDTO;
+import kz.smarthealth.userservice.model.dto.SignInResponseDTO;
+import kz.smarthealth.userservice.model.dto.SignUpInDTO;
 import kz.smarthealth.userservice.model.dto.UserDTO;
 import kz.smarthealth.userservice.model.entity.RoleEntity;
 import kz.smarthealth.userservice.model.entity.UserEntity;
@@ -13,7 +13,6 @@ import kz.smarthealth.userservice.repository.UserRepository;
 import kz.smarthealth.userservice.security.JwtUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -23,7 +22,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.OffsetDateTime;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -49,52 +47,45 @@ public class UserService {
     private final JwtUtils jwtUtils;
 
     /**
-     * Checks if email is already in use
-     *
-     * @param email user email
-     * @return true if user is available, otherwise false
-     */
-    @Transactional(readOnly = true)
-    public boolean isEmailAvailable(String email) {
-        return userRepository.findByEmail(email).isEmpty();
-    }
-
-    /**
      * Creates new user
      *
-     * @param userDTO user information to be created
+     * @param signUpInDTO user data
      * @return newly created user
      */
-    public UserDTO createUser(UserDTO userDTO) {
-        validateEmail(userDTO.getEmail());
-        UserEntity userEntity = modelMapper.map(userDTO, UserEntity.class);
-        userEntity.setCreatedBy(userEntity.getEmail());
-        userEntity.setUpdatedBy(userEntity.getEmail());
-        userEntity.getContact().setCreatedBy(userEntity.getEmail());
-        userEntity.getContact().setUpdatedBy(userEntity.getEmail());
-        userEntity.setPassword(passwordEncoder.encode(userDTO.getPassword()));
-        userEntity.getContact().setUser(userEntity);
-        userEntity.setRoles(getUserRoles(userDTO.getRoles()));
-        userEntity = userRepository.save(userEntity);
-        UserDTO createdUserDTO = modelMapper.map(userEntity, UserDTO.class);
-        createdUserDTO.setRoles(userDTO.getRoles());
+    public SignUpInDTO signUp(SignUpInDTO signUpInDTO) {
+        validateUserData(signUpInDTO);
+        UserEntity userEntity = UserEntity.builder()
+                .email(signUpInDTO.getEmail())
+                .password(passwordEncoder.encode(signUpInDTO.getPassword()))
+                .roles(getUserRoles(signUpInDTO.getRoles()))
+                .build();
+        userRepository.save(userEntity);
+        signUpInDTO.setPassword(null);
 
-        return createdUserDTO;
+        return signUpInDTO;
     }
 
     /**
-     * Checks if user email address is in use
+     * Validates user data
      *
-     * @param email address of user
+     * @param signUpInDTO user data to be created
      */
-    private void validateEmail(String email) {
-        userRepository.findByEmail(email)
-                .ifPresent(entity -> {
-                    throw CustomException.builder()
-                            .httpStatus(HttpStatus.BAD_REQUEST)
-                            .message(EMAIL_IN_USE.getText(email))
-                            .build();
-                });
+    private void validateUserData(SignUpInDTO signUpInDTO) {
+        if (signUpInDTO.getRoles() == null || signUpInDTO.getRoles().isEmpty()) {
+            throw CustomException.builder()
+                    .httpStatus(HttpStatus.BAD_REQUEST)
+                    .error(INVALID_ROLES.name())
+                    .errorMessage(INVALID_ROLES.getText(signUpInDTO.getEmail()))
+                    .build();
+        }
+
+        if (userRepository.findByEmail(signUpInDTO.getEmail()).isPresent()) {
+            throw CustomException.builder()
+                    .httpStatus(HttpStatus.BAD_REQUEST)
+                    .error(EMAIL_IN_USE.name())
+                    .errorMessage(EMAIL_IN_USE.getText(signUpInDTO.getEmail()))
+                    .build();
+        }
     }
 
     /**
@@ -110,7 +101,7 @@ public class UserService {
                 roleRepository.findByName(role.name())
                         .orElseThrow(() -> CustomException.builder()
                                 .httpStatus(HttpStatus.BAD_REQUEST)
-                                .message(ROLE_BY_NAME_NOT_FOUND.getText(role.name()))
+                                .errorMessage(ROLE_BY_NAME_NOT_FOUND.getText(role.name()))
                                 .build())));
 
         return roleEntitySet;
@@ -119,17 +110,17 @@ public class UserService {
     /**
      * Authenticates user.
      *
-     * @param loginRequestDTO user sign in information
+     * @param signUpInDTO user sign in information
      * @return access token and refresh token
      */
     @Transactional
-    public LoginResponseDTO authenticateUser(LoginRequestDTO loginRequestDTO) {
+    public SignInResponseDTO signIn(SignUpInDTO signUpInDTO) {
         Authentication authenticate = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
-                loginRequestDTO.getEmail(), loginRequestDTO.getPassword()));
-        UserEntity userEntity = userRepository.findByEmail(loginRequestDTO.getEmail())
+                signUpInDTO.getEmail(), signUpInDTO.getPassword()));
+        UserEntity userEntity = userRepository.findByEmail(signUpInDTO.getEmail())
                 .orElseThrow(() -> CustomException.builder()
                         .httpStatus(HttpStatus.NOT_FOUND)
-                        .message(USER_BY_EMAIL_NOT_FOUND.getText(loginRequestDTO.getEmail()))
+                        .errorMessage(USER_BY_EMAIL_NOT_FOUND.getText(signUpInDTO.getEmail()))
                         .build());
         String token = jwtUtils.generateJwtToken(authenticate);
         String refreshToken = jwtUtils.generateRefreshToken(authenticate);
@@ -140,7 +131,7 @@ public class UserService {
                 .map(entity -> RoleEnum.valueOf(entity.getName()))
                 .collect(Collectors.toSet()));
 
-        return LoginResponseDTO.builder()
+        return SignInResponseDTO.builder()
                 .accessToken(token)
                 .refreshToken(refreshToken)
                 .user(userDTO)
@@ -157,52 +148,15 @@ public class UserService {
     public UserDTO getUserById(UUID id) {
         UserEntity userEntity = findUserById(id);
         UserDTO userDTO = modelMapper.map(userEntity, UserDTO.class);
-        userDTO.setContact(modelMapper.map(userEntity.getContact(), ContactDTO.class));
         userDTO.setRoles(userEntity.getRoles().stream()
                 .map(entity -> RoleEnum.valueOf(entity.getName()))
                 .collect(Collectors.toSet()));
 
+        if (userEntity.getContact() != null) {
+            userDTO.setContact(modelMapper.map(userEntity.getContact(), ContactDTO.class));
+        }
+
         return userDTO;
-    }
-
-    /**
-     * Updates user by id
-     *
-     * @param id      user id
-     * @param userDTO user data
-     * @return updated user data
-     */
-    @Transactional
-    public UserDTO updateUserById(UUID id, UserDTO userDTO) {
-        UserEntity userEntity = findUserById(id);
-        if (!StringUtils.isBlank(userDTO.getName())) {
-            userEntity.setName(userDTO.getName());
-        }
-        if (userDTO.getBirthDate() != null) {
-            userEntity.setBirthDate(userDTO.getBirthDate());
-        }
-        if (userDTO.getDoctorTypeId() != null) {
-            userEntity.setDoctorTypeId(userDTO.getDoctorTypeId());
-        }
-        userEntity.setLastName(userDTO.getLastName());
-        userEntity.setAbout(userDTO.getAbout());
-        userEntity.setUpdatedBy(userEntity.getId().toString());
-        userEntity.setUpdatedAt(OffsetDateTime.now());
-        userEntity = userRepository.save(userEntity);
-
-        return modelMapper.map(userEntity, UserDTO.class);
-    }
-
-    /**
-     * Deletes user by id
-     *
-     * @param id user id
-     */
-    @Transactional
-    public void deleteUserById(UUID id) {
-        UserEntity userEntity = findUserById(id);
-        userEntity.setDeletedAt(OffsetDateTime.now());
-        userRepository.save(userEntity);
     }
 
     /**
@@ -215,7 +169,7 @@ public class UserService {
         return userRepository.findById(id)
                 .orElseThrow(() -> CustomException.builder()
                         .httpStatus(HttpStatus.NOT_FOUND)
-                        .message(USER_BY_ID_NOT_FOUND.getText(id.toString()))
+                        .errorMessage(USER_BY_ID_NOT_FOUND.getText(id.toString()))
                         .build());
     }
 }

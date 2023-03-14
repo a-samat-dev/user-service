@@ -17,6 +17,7 @@
         <passay.version>1.6.2</passay.version>
         <jjwt.version>0.9.1</jjwt.version>
         <passay.version>1.6.2</passay.version>
+        <common-logic.version>0.0.1-SNAPSHOT</common-logic.version>
     </properties>
     <dependencies>
         <dependency>
@@ -41,7 +42,7 @@
         <dependency>
             <groupId>kz.smarthealth</groupId>
             <artifactId>common-logic</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+            <version>${common-logic.version}</version>
         </dependency>
         <dependency>
             <groupId>com.h2database</groupId>

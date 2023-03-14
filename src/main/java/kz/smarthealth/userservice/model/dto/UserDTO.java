@@ -6,9 +6,8 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
+import kz.smarthealth.commonlogic.dto.RoleEnum;
 import kz.smarthealth.commonlogic.util.AppConstants;
-import kz.smarthealth.userservice.model.RoleEnum;
-import kz.smarthealth.userservice.validator.Password;
 import kz.smarthealth.userservice.validator.User;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -24,7 +23,6 @@ import java.util.UUID;
 
 import static com.fasterxml.jackson.annotation.JsonFormat.Shape.STRING;
 import static com.fasterxml.jackson.annotation.JsonProperty.Access.READ_ONLY;
-import static com.fasterxml.jackson.annotation.JsonProperty.Access.WRITE_ONLY;
 
 /**
  * Data transfer object for user
@@ -45,10 +43,6 @@ public class UserDTO {
     @NotEmpty(message = "Email must be provided")
     @Size(max = 155, message = "Email max length = 255 characters")
     private String email;
-
-    @Password
-    @JsonProperty(access = WRITE_ONLY)
-    private String password;
 
     @NotEmpty(message = "Name must be provided")
     @Size(max = 155, message = "Name max length = 155 characters")

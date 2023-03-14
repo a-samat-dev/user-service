@@ -1,9 +1,8 @@
 package kz.smarthealth.userservice.service;
 
+import kz.smarthealth.commonlogic.dto.RoleEnum;
 import kz.smarthealth.commonlogic.exception.CustomException;
-import kz.smarthealth.userservice.model.RoleEnum;
-import kz.smarthealth.userservice.model.dto.ContactDTO;
-import kz.smarthealth.userservice.model.dto.LoginRequestDTO;
+import kz.smarthealth.userservice.model.dto.SignUpInDTO;
 import kz.smarthealth.userservice.model.dto.UserDTO;
 import kz.smarthealth.userservice.model.entity.RoleEntity;
 import kz.smarthealth.userservice.model.entity.UserEntity;
@@ -12,7 +11,6 @@ import kz.smarthealth.userservice.repository.UserRepository;
 import kz.smarthealth.userservice.security.JwtUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
@@ -24,7 +22,6 @@ import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.time.LocalDate;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -34,7 +31,6 @@ import static kz.smarthealth.userservice.util.MessageSource.USER_BY_ID_NOT_FOUND
 import static kz.smarthealth.userservice.util.TestData.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -61,118 +57,75 @@ class UserServiceTest {
     private UserService underTest;
 
     @Test
-    void isEmailAvailable_returnsTrue_whenEmailIsNotInUse() {
+    void signUp_throwsException_whenInvalidRoles() {
         // given
-        when(userRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.empty());
-        // when
-        boolean isEmailAvailable = underTest.isEmailAvailable(TEST_EMAIL);
-        // then
-        assertTrue(isEmailAvailable);
-    }
-
-    @Test
-    void isEmailAvailable_returnsFalse_whenEmailIsInUse() {
-        // given
-        when(userRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.of(UserEntity.builder().build()));
-        // when
-        boolean isEmailAvailable = underTest.isEmailAvailable(TEST_EMAIL);
-        // then
-        assertFalse(isEmailAvailable);
-    }
-
-    @Test
-    void createUser_throwsError_whenDuplicatedEmail() {
-        // given
-        UserDTO userDTO = UserDTO.builder()
+        SignUpInDTO signUpInDTO = SignUpInDTO.builder()
                 .email(TEST_EMAIL)
+                .password(TEST_PASSWORD)
                 .build();
-        when(userRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.of(UserEntity.builder()
-                .email(TEST_EMAIL)
-                .build()));
         // when
-        CustomException exception = assertThrows(CustomException.class, () -> underTest.createUser(userDTO));
+        CustomException exception = assertThrows(CustomException.class, () -> underTest.signUp(signUpInDTO));
+        // then
+        assertEquals("Invalid roles provided.", exception.getErrorMessage());
+    }
+
+    @Test
+    void signUp_throwsException_whenEmailInUse() {
+        // given
+        SignUpInDTO signUpInDTO = SignUpInDTO.builder()
+                .email(TEST_EMAIL)
+                .password(TEST_PASSWORD)
+                .roles(Set.of(RoleEnum.ROLE_PATIENT))
+                .build();
+        when(userRepository.findByEmail(signUpInDTO.getEmail())).thenReturn(Optional.of(UserEntity.builder().build()));
+        // when
+        CustomException exception = assertThrows(CustomException.class, () -> underTest.signUp(signUpInDTO));
         // then
         assertEquals("test1@gmail.com is already in use, please provide another email address.",
-                exception.getMessage());
+                exception.getErrorMessage());
     }
 
     @Test
-    void createUser_throwsError_whenInvalidRole() {
+    void signUp_createsUser() {
         // given
-        ContactDTO contactDTO = ContactDTO.builder()
+        SignUpInDTO signUpInDTO = SignUpInDTO.builder()
+                .email(TEST_EMAIL)
+                .password(TEST_PASSWORD)
+                .roles(Set.of(RoleEnum.ROLE_PATIENT))
                 .build();
-        UserDTO userDTO = UserDTO.builder()
-                .email(TEST_EMAIL)
-                .contact(contactDTO)
-                .roles(Set.of(RoleEnum.ROLE_ORGANIZATION))
-                .build();
-        when(userRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.of(UserEntity.builder()
-                .email(TEST_EMAIL)
-                .build()));
-        when(userRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.empty());
-        when(roleRepository.findByName(TEST_ROLE_ORGANIZATION)).thenReturn(Optional.empty());
+        when(userRepository.findByEmail(signUpInDTO.getEmail())).thenReturn(Optional.empty());
+        when(roleRepository.findByName(signUpInDTO.getRoles().iterator().next().name()))
+                .thenReturn(Optional.of(RoleEntity.builder()
+                        .id((short) 1)
+                        .name(signUpInDTO.getRoles().iterator().next().name())
+                        .build()));
         // when
-        CustomException exception = assertThrows(CustomException.class, () -> underTest.createUser(userDTO));
+        SignUpInDTO actualSignUpInDTO = underTest.signUp(signUpInDTO);
         // then
-        assertEquals("Invalid role provided: " + userDTO.getRoles().iterator().next(),
-                exception.getMessage());
+        assertNotNull(actualSignUpInDTO);
+        assertEquals(signUpInDTO.getEmail(), actualSignUpInDTO.getEmail());
+        assertEquals(signUpInDTO.getPassword(), actualSignUpInDTO.getPassword());
     }
 
     @Test
-    void createUser_returnsCreatedUser() {
+    void signIn_throwsError_whenInvalidCredentialsProvided() {
         // given
-        UserDTO userDTO = getUserDTO();
-        UserEntity userEntity = modelMapper.map(userDTO, UserEntity.class);
-        userEntity.setId(UUID.randomUUID());
-        userDTO.setRoles(Set.of(RoleEnum.ROLE_DOCTOR));
-        when(userRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.of(UserEntity.builder()
-                .email(TEST_EMAIL)
-                .build()));
-        when(userRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.empty());
-        when(roleRepository.findByName(TEST_ROLE_DOCTOR)).thenReturn(Optional.of(RoleEntity.builder()
-                .id((short) 2)
-                .name(TEST_ROLE_DOCTOR)
-                .build()));
-        when(userRepository.save(any())).thenReturn(userEntity);
-        // when
-        UserDTO createdUserDTO = underTest.createUser(userDTO);
-        // then
-
-        assertEquals(userDTO.getEmail(), createdUserDTO.getEmail());
-        assertNotNull(userDTO.getPassword());
-        assertEquals(userDTO.getName(), createdUserDTO.getName());
-        assertEquals(userDTO.getLastName(), createdUserDTO.getLastName());
-        assertEquals(userDTO.getBirthDate(), createdUserDTO.getBirthDate());
-        assertEquals(userDTO.getDoctorTypeId(), createdUserDTO.getDoctorTypeId());
-        assertEquals(userDTO.getAbout(), createdUserDTO.getAbout());
-        assertEquals(RoleEnum.ROLE_DOCTOR, createdUserDTO.getRoles().iterator().next());
-        assertEquals(userDTO.getContact().getCityId(), createdUserDTO.getContact().getCityId());
-        assertEquals(userDTO.getContact().getStreet(), createdUserDTO.getContact().getStreet());
-        assertEquals(userDTO.getContact().getBuildingNumber(), createdUserDTO.getContact().getBuildingNumber());
-        assertEquals(userDTO.getContact().getFlatNumber(), createdUserDTO.getContact().getFlatNumber());
-        assertEquals(userDTO.getContact().getPhoneNumber1(), createdUserDTO.getContact().getPhoneNumber1());
-        assertEquals(userDTO.getContact().getPhoneNumber2(), createdUserDTO.getContact().getPhoneNumber2());
-    }
-
-    @Test
-    void authenticateUser_throwsError_whenInvalidCredentialsProvided() {
-        // given
-        LoginRequestDTO loginRequestDTO = LoginRequestDTO.builder()
+        SignUpInDTO signInDTO = SignUpInDTO.builder()
                 .email(TEST_EMAIL)
                 .password(TEST_PASSWORD)
                 .build();
         when(authenticationManager.authenticate(any())).thenThrow(new BadCredentialsException("Unauthorized"));
         // when
         AuthenticationException exception = assertThrows(AuthenticationException.class,
-                () -> underTest.authenticateUser(loginRequestDTO));
+                () -> underTest.signIn(signInDTO));
         // then
         assertEquals("Unauthorized", exception.getMessage());
     }
 
     @Test
-    void authenticateUser_throwsError_whenUserNotFound() {
+    void signIn_throwsError_whenUserNotFound() {
         // given
-        LoginRequestDTO loginRequestDTO = LoginRequestDTO.builder()
+        SignUpInDTO signInDTO = SignUpInDTO.builder()
                 .email(TEST_EMAIL)
                 .password(TEST_PASSWORD)
                 .build();
@@ -181,9 +134,9 @@ class UserServiceTest {
         when(userRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.empty());
         // when
         CustomException exception = assertThrows(CustomException.class,
-                () -> underTest.authenticateUser(loginRequestDTO));
+                () -> underTest.signIn(signInDTO));
         // then
-        assertEquals(USER_BY_EMAIL_NOT_FOUND.getText(TEST_EMAIL), exception.getMessage());
+        assertEquals(USER_BY_EMAIL_NOT_FOUND.getText(TEST_EMAIL), exception.getErrorMessage());
     }
 
     @Test
@@ -195,7 +148,7 @@ class UserServiceTest {
         CustomException exception = assertThrows(CustomException.class,
                 () -> underTest.getUserById(invalidId));
         // then
-        assertEquals(USER_BY_ID_NOT_FOUND.getText(invalidId.toString()), exception.getMessage());
+        assertEquals(USER_BY_ID_NOT_FOUND.getText(invalidId.toString()), exception.getErrorMessage());
     }
 
     @Test
@@ -230,76 +183,5 @@ class UserServiceTest {
         assertEquals(userEntity.getContact().getFlatNumber(), userDTO.getContact().getFlatNumber());
         assertEquals(userEntity.getContact().getPhoneNumber1(), userDTO.getContact().getPhoneNumber1());
         assertEquals(userEntity.getContact().getPhoneNumber2(), userDTO.getContact().getPhoneNumber2());
-    }
-
-    @Test
-    void updateUserById_throwsError_whenUserNotFound() {
-        // given
-        UUID invalidId = UUID.randomUUID();
-        when(userRepository.findById(invalidId)).thenReturn(Optional.empty());
-        // when
-        CustomException exception = assertThrows(CustomException.class,
-                () -> underTest.updateUserById(invalidId, UserDTO.builder().build()));
-        // then
-        assertEquals(USER_BY_ID_NOT_FOUND.getText(invalidId.toString()), exception.getMessage());
-    }
-
-    @Test
-    void updateUserById_updatesUser() {
-        // given
-        ArgumentCaptor<UserEntity> argumentCaptor = ArgumentCaptor.forClass(UserEntity.class);
-        UserEntity userEntity = getUserEntity();
-        UUID id = UUID.randomUUID();
-        userEntity.setId(id);
-        UserDTO userDTO = UserDTO.builder()
-                .name("UpdatedName")
-                .lastName("UpdatedLastName")
-                .birthDate(LocalDate.of(2000, 1, 1))
-                .doctorTypeId((short) 2)
-                .about("UpdatedAbout")
-                .build();
-        when(userRepository.findById(id)).thenReturn(Optional.of(userEntity));
-        when(userRepository.save(any())).thenReturn(UserEntity.builder().build());
-        // when
-        UserDTO actualUserDTO = underTest.updateUserById(id, userDTO);
-        // then
-        verify(userRepository).save(argumentCaptor.capture());
-        UserEntity updatedUserEntity = argumentCaptor.getValue();
-
-        assertNotNull(actualUserDTO);
-        assertNotNull(updatedUserEntity);
-        assertEquals(userDTO.getName(), updatedUserEntity.getName());
-        assertEquals(userDTO.getLastName(), updatedUserEntity.getLastName());
-        assertEquals(userDTO.getBirthDate(), updatedUserEntity.getBirthDate());
-        assertEquals(userDTO.getDoctorTypeId(), updatedUserEntity.getDoctorTypeId());
-        assertEquals(userDTO.getAbout(), updatedUserEntity.getAbout());
-    }
-
-    @Test
-    void deleteUserById_throwsError_whenUserNotFound() {
-        // given
-        UUID invalidId = UUID.randomUUID();
-        when(userRepository.findById(invalidId)).thenReturn(Optional.empty());
-        // when
-        CustomException exception = assertThrows(CustomException.class,
-                () -> underTest.deleteUserById(invalidId));
-        // then
-        assertEquals(USER_BY_ID_NOT_FOUND.getText(invalidId.toString()), exception.getMessage());
-    }
-
-    @Test
-    void deleteUserById_deletesUser() {
-        // given
-        ArgumentCaptor<UserEntity> argumentCaptor = ArgumentCaptor.forClass(UserEntity.class);
-        UUID id = UUID.randomUUID();
-        when(userRepository.findById(id)).thenReturn(Optional.of(UserEntity.builder().build()));
-        // when
-        underTest.deleteUserById(id);
-        // then
-        verify(userRepository).save(argumentCaptor.capture());
-        UserEntity userEntity = argumentCaptor.getValue();
-
-        assertNotNull(userEntity);
-        assertNotNull(userEntity.getDeletedAt());
     }
 }

@@ -28,14 +28,6 @@ class PasswordValidatorTest {
     private PasswordValidator underTest;
 
     @Test
-    void isValid_returnsTrue_whenPasswordIsNull() {
-        // when
-        boolean isValid = underTest.isValid(null, constraintValidatorContext);
-        // then
-        assertTrue(isValid);
-    }
-
-    @Test
     void isValid_returnsTrue_whenValidPassword() {
         // given
         String password = "Aa123456!";

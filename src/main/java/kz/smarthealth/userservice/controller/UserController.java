@@ -1,9 +1,10 @@
 package kz.smarthealth.userservice.controller;
 
 import jakarta.validation.Valid;
+import kz.smarthealth.commonlogic.aop.Log;
 import kz.smarthealth.commonlogic.util.AppConstants;
-import kz.smarthealth.userservice.model.dto.LoginRequestDTO;
-import kz.smarthealth.userservice.model.dto.LoginResponseDTO;
+import kz.smarthealth.userservice.model.dto.SignInResponseDTO;
+import kz.smarthealth.userservice.model.dto.SignUpInDTO;
 import kz.smarthealth.userservice.model.dto.UserDTO;
 import kz.smarthealth.userservice.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -28,37 +29,28 @@ public class UserController {
     private final UserService userService;
 
     /**
-     * Checks if email is available to use
+     * Registers new user
      *
-     * @param email user email address
-     * @return result of email existence
-     */
-    @GetMapping("/email")
-    public boolean isEmailAvailable(@RequestParam String email) {
-        return userService.isEmailAvailable(email.toLowerCase());
-    }
-
-    /**
-     * Creates new user
-     *
-     * @param userDTO user information
+     * @param signUpInDTO user data
      * @return newly created user
      */
     @PostMapping("/sign-up")
     @ResponseStatus(HttpStatus.CREATED)
-    public UserDTO createUser(@RequestBody @Valid UserDTO userDTO) {
-        return userService.createUser(userDTO);
+    public SignUpInDTO signUp(@RequestBody @Valid SignUpInDTO signUpInDTO) {
+        log.info("Incoming request to sign up, email={}", signUpInDTO.getEmail());
+        return userService.signUp(signUpInDTO);
     }
 
     /**
      * Authenticates user.
      *
-     * @param loginRequestDTO user sign in information
+     * @param signUpInDTO user sign in information
      * @return access token and refresh token
      */
     @PostMapping("/sign-in")
-    public LoginResponseDTO authenticateUser(@RequestBody @Valid LoginRequestDTO loginRequestDTO) {
-        return userService.authenticateUser(loginRequestDTO);
+    public SignInResponseDTO singIn(@RequestBody @Valid SignUpInDTO signUpInDTO) {
+        log.info("Incoming request to sign in, email={}", signUpInDTO.getEmail());
+        return userService.signIn(signUpInDTO);
     }
 
     /**
@@ -67,34 +59,10 @@ public class UserController {
      * @param id of user
      * @return user information
      */
+    @Log
     @Secured({"ROLE_ADMIN", "ROLE_ORGANIZATION", "ROLE_DOCTOR", "ROLE_PATIENT"})
     @GetMapping("/{id}")
     public UserDTO getUserById(@PathVariable UUID id) {
         return userService.getUserById(id);
-    }
-
-    /**
-     * Updates user by id
-     *
-     * @param id      user id
-     * @param userDTO user data
-     * @return updated user data
-     */
-    @PutMapping("/{id}")
-    public UserDTO updateUserById(@PathVariable UUID id, @RequestBody @Valid UserDTO userDTO) {
-        log.info("Incoming request to update user by id, id={}", id);
-        return userService.updateUserById(id, userDTO);
-    }
-
-    /**
-     * Deletes user by id
-     *
-     * @param id user id
-     */
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    @DeleteMapping("/{id}")
-    public void deleteUserById(@PathVariable UUID id) {
-        log.info("Incoming request to delete user by id, id={}", id);
-        userService.deleteUserById(id);
     }
 }

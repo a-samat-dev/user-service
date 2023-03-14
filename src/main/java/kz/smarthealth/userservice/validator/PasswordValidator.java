@@ -30,8 +30,13 @@ public class PasswordValidator implements ConstraintValidator<Password, String> 
      */
     @Override
     public boolean isValid(String value, ConstraintValidatorContext context) {
-        if (StringUtils.isBlank(value))
-            return true;
+        if (StringUtils.isBlank(value)) {
+            context.buildConstraintViolationWithTemplate("Password must be provided")
+                    .addConstraintViolation()
+                    .disableDefaultConstraintViolation();
+
+            return false;
+        }
 
         org.passay.PasswordValidator validator = getPasswordValidator();
         RuleResult result = validator.validate(new PasswordData(value));

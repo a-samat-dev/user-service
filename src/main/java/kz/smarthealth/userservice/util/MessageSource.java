@@ -2,6 +2,7 @@ package kz.smarthealth.userservice.util;
 
 public enum MessageSource {
 
+    INVALID_ROLES("Invalid roles provided."),
     EMAIL_IN_USE("%s is already in use, please provide another email address."),
     USER_BY_ID_NOT_FOUND("User with id=%s not found."),
     USER_BY_EMAIL_NOT_FOUND("User with email=%s not found."),

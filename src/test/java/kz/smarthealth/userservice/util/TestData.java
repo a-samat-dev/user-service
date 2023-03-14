@@ -1,6 +1,6 @@
 package kz.smarthealth.userservice.util;
 
-import kz.smarthealth.userservice.model.RoleEnum;
+import kz.smarthealth.commonlogic.dto.RoleEnum;
 import kz.smarthealth.userservice.model.dto.ContactDTO;
 import kz.smarthealth.userservice.model.dto.UserDTO;
 import kz.smarthealth.userservice.model.entity.ContactEntity;
@@ -42,7 +42,6 @@ public final class TestData {
     public static UserDTO getUserDTO() {
         return UserDTO.builder()
                 .email(TEST_EMAIL)
-                .password(TEST_PASSWORD)
                 .name(TEST_NAME)
                 .lastName(TEST_LAST_NAME)
                 .birthDate(TEST_BIRTH_DATE)

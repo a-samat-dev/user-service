@@ -4,12 +4,12 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import kz.smarthealth.commonlogic.dto.ErrorResponseDTO;
-import kz.smarthealth.userservice.model.RoleEnum;
-import kz.smarthealth.userservice.model.dto.ContactDTO;
-import kz.smarthealth.userservice.model.dto.LoginRequestDTO;
-import kz.smarthealth.userservice.model.dto.LoginResponseDTO;
+import kz.smarthealth.commonlogic.dto.RoleEnum;
+import kz.smarthealth.userservice.model.dto.SignInResponseDTO;
+import kz.smarthealth.userservice.model.dto.SignUpInDTO;
 import kz.smarthealth.userservice.model.dto.UserDTO;
 import kz.smarthealth.userservice.model.entity.UserEntity;
+import kz.smarthealth.userservice.repository.RoleRepository;
 import kz.smarthealth.userservice.repository.UserRepository;
 import kz.smarthealth.userservice.util.MessageSource;
 import org.apache.commons.lang3.StringUtils;
@@ -25,11 +25,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import java.time.LocalDate;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 import static kz.smarthealth.userservice.util.TestData.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -54,112 +50,14 @@ class UserControllerControllerIT {
     @Autowired
     private UserRepository userRepository;
 
-    @Test
-    void isEmailAvailable_returnsTrue_whenEmailNotInUse() throws Exception {
-        // when
-        MvcResult mvcResult = this.mockMvc.perform(MockMvcRequestBuilders.get("/api/v1/users/email?email="
-                        + TEST_EMAIL))
-                .andExpect(status().isOk()).andReturn();
-        // then
-        boolean result = Boolean.parseBoolean(mvcResult.getResponse().getContentAsString());
-        assertTrue(result);
-    }
+    @Autowired
+    private RoleRepository roleRepository;
 
     @Test
-    void isEmailAvailable_returnsFalse_whenEmailInUse() throws Exception {
-        // when
-        MvcResult mvcResult = this.mockMvc.perform(MockMvcRequestBuilders.get("/api/v1/users/email?email="
-                        + TEST_EXISTING_EMAIL))
-                .andExpect(status().isOk()).andReturn();
-        // then
-        boolean result = Boolean.parseBoolean(mvcResult.getResponse().getContentAsString());
-        assertFalse(result);
-    }
-
-    @Test
-    void createUser_returnsBadRequest_whenMandatoryFieldsNotProvided() throws Exception {
+    void signUp_returnsBadRequest_whenMandatoryFieldsNotProvided() throws Exception {
         // given
-        UserDTO userDTO = UserDTO.builder()
-                .build();
-        String requestBody = objectMapper.writeValueAsString(userDTO);
-        // when
-        MvcResult mvcResult = this.mockMvc.perform(MockMvcRequestBuilders.post("/api/v1/users/sign-up")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(requestBody)
-                        .characterEncoding("utf-8"))
-                .andExpect(status().isBadRequest()).andReturn();
-        // then
-        ErrorResponseDTO errorResponseDTO = objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
-                ErrorResponseDTO.class);
-        Map<String, String> invalidFields = errorResponseDTO.getInvalidFields();
-
-        assertEquals(3, invalidFields.size());
-        assertTrue(invalidFields.containsKey("email"));
-        assertTrue(invalidFields.containsKey("name"));
-        assertTrue(invalidFields.containsKey("roles"));
-    }
-
-    @Test
-    void createUser_returnsBadRequest_whenDoctorMandatoryFieldsNotProvided() throws Exception {
-        // given
-        UserDTO userDTO = UserDTO.builder()
-                .roles(Set.of(RoleEnum.ROLE_DOCTOR))
-                .build();
-        String requestBody = objectMapper.writeValueAsString(userDTO);
-        // when
-        MvcResult mvcResult = this.mockMvc.perform(MockMvcRequestBuilders.post("/api/v1/users/sign-up")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(requestBody)
-                        .characterEncoding("utf-8"))
-                .andExpect(status().isBadRequest()).andReturn();
-        // then
-        ErrorResponseDTO errorResponseDTO = objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
-                ErrorResponseDTO.class);
-        Map<String, String> invalidFields = errorResponseDTO.getInvalidFields();
-
-        assertEquals(4, invalidFields.size());
-        assertTrue(invalidFields.containsKey("email"));
-        assertTrue(invalidFields.containsKey("name"));
-        assertTrue(invalidFields.containsKey("birthDate"));
-        assertTrue(invalidFields.containsKey("doctorTypeId"));
-    }
-
-    @Test
-    void createUser_returnsBadRequest_whenPatientMandatoryFieldsNotProvided() throws Exception {
-        // given
-        UserDTO userDTO = UserDTO.builder()
-                .roles(Set.of(RoleEnum.ROLE_PATIENT))
-                .build();
-        String requestBody = objectMapper.writeValueAsString(userDTO);
-        // when
-        MvcResult mvcResult = this.mockMvc.perform(MockMvcRequestBuilders.post("/api/v1/users/sign-up")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(requestBody)
-                        .characterEncoding("utf-8"))
-                .andExpect(status().isBadRequest()).andReturn();
-        // then
-        ErrorResponseDTO errorResponseDTO = objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
-                ErrorResponseDTO.class);
-        Map<String, String> invalidFields = errorResponseDTO.getInvalidFields();
-
-        assertEquals(3, invalidFields.size());
-        assertTrue(invalidFields.containsKey("email"));
-        assertTrue(invalidFields.containsKey("name"));
-        assertTrue(invalidFields.containsKey("birthDate"));
-    }
-
-    @Test
-    void createUser_returnsBadRequest_whenContactMandatoryFieldsNotProvided() throws Exception {
-        // given
-        UserDTO userDTO = UserDTO.builder()
-                .email(TEST_EMAIL)
-                .password(TEST_PASSWORD)
-                .name(TEST_NAME)
-                .contact(ContactDTO.builder()
-                        .build())
-                .roles(Set.of(RoleEnum.ROLE_ORGANIZATION))
-                .build();
-        String requestBody = objectMapper.writeValueAsString(userDTO);
+        SignUpInDTO signUpInDTO = SignUpInDTO.builder().build();
+        String requestBody = objectMapper.writeValueAsString(signUpInDTO);
         // when
         MvcResult mvcResult = this.mockMvc.perform(MockMvcRequestBuilders.post("/api/v1/users/sign-up")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -172,25 +70,42 @@ class UserControllerControllerIT {
         Map<String, String> invalidFields = errorResponseDTO.getInvalidFields();
 
         assertEquals(2, invalidFields.size());
-        assertTrue(invalidFields.containsKey("contact.cityId"));
-        assertTrue(invalidFields.containsKey("contact.phoneNumber1"));
+        assertTrue(invalidFields.containsKey("email"));
+        assertTrue(invalidFields.containsKey("password"));
     }
 
     @Test
-    void createUser_returnsBadRequest_whenEmailInUse() throws Exception {
+    void signUp_returnsBadRequest_whenInvalidRoles() throws Exception {
+        // given
+        SignUpInDTO signUpInDTO = SignUpInDTO.builder()
+                .email(TEST_EMAIL)
+                .password(TEST_PASSWORD)
+                .build();
+        String requestBody = objectMapper.writeValueAsString(signUpInDTO);
+        // when
+        MvcResult mvcResult = this.mockMvc.perform(MockMvcRequestBuilders.post("/api/v1/users/sign-up")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody)
+                        .characterEncoding("utf-8"))
+                .andExpect(status().isBadRequest()).andReturn();
+        // then
+        ErrorResponseDTO errorResponseDTO = objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
+                ErrorResponseDTO.class);
+
+        assertNotNull(errorResponseDTO.getMessage());
+        assertEquals("Invalid roles provided.", errorResponseDTO.getMessage());
+    }
+
+    @Test
+    void signUp_returnsBadRequest_whenEmailInUse() throws Exception {
         // given
         List<UserEntity> userEntityList = userRepository.findAll();
-        UserDTO userDTO = UserDTO.builder()
+        SignUpInDTO signUpInDTO = SignUpInDTO.builder()
                 .email(userEntityList.get(0).getEmail())
                 .password(TEST_PASSWORD)
-                .name(TEST_NAME)
-                .contact(ContactDTO.builder()
-                        .cityId(TEST_CITY)
-                        .phoneNumber1(TEST_PHONE_NUMBER_1)
-                        .build())
-                .roles(Set.of(RoleEnum.ROLE_ORGANIZATION))
+                .roles(Set.of(RoleEnum.ROLE_PATIENT))
                 .build();
-        String requestBody = objectMapper.writeValueAsString(userDTO);
+        String requestBody = objectMapper.writeValueAsString(signUpInDTO);
         // when
         MvcResult mvcResult = this.mockMvc.perform(MockMvcRequestBuilders.post("/api/v1/users/sign-up")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -208,45 +123,33 @@ class UserControllerControllerIT {
     }
 
     @Test
-    void createUser_returnsCreatedOrganization() throws Exception {
+    void signUp_returnsCreatedUser() throws Exception {
         // given
-        UserDTO userDTO = getUserDTO();
-        String requestBody = objectMapper.writeValueAsString(userDTO);
-        requestBody = requestBody.replaceFirst("\"id\":null", "\"password\":\"" + TEST_PASSWORD + "\"");
+        SignUpInDTO signUpInDTO = SignUpInDTO.builder()
+                .email(TEST_EMAIL)
+                .password(TEST_PASSWORD)
+                .roles(Set.of(RoleEnum.ROLE_PATIENT))
+                .build();
+        String requestBody = objectMapper.writeValueAsString(signUpInDTO);
         // when
         MvcResult mvcResult = this.mockMvc.perform(MockMvcRequestBuilders.post("/api/v1/users/sign-up")
                         .contentType(MediaType.APPLICATION_JSON).content(requestBody).characterEncoding("utf-8"))
                 .andExpect(status().isCreated()).andReturn();
         // then
-        UserDTO createdUserDTO = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), UserDTO.class);
-        Map<String, Object> userDTOMap = objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
-                new TypeReference<>() {
-                });
+        SignUpInDTO createdSignUpInDTO = objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
+                SignUpInDTO.class);
 
-        assertEquals(TEST_EMAIL, createdUserDTO.getEmail());
-        assertNull(createdUserDTO.getPassword());
-        assertEquals(TEST_NAME, createdUserDTO.getName());
-        assertEquals(TEST_LAST_NAME, createdUserDTO.getLastName());
-        assertEquals(TEST_BIRTH_DATE, createdUserDTO.getBirthDate());
-        assertEquals(TEST_DOCTOR_TYPE, createdUserDTO.getDoctorTypeId());
-        assertEquals(TEST_ABOUT, createdUserDTO.getAbout());
-        assertEquals(RoleEnum.ROLE_ORGANIZATION, createdUserDTO.getRoles().iterator().next());
-        assertNotNull(createdUserDTO.getContact());
-        assertEquals(TEST_CITY, createdUserDTO.getContact().getCityId());
-        assertEquals(TEST_STREET, createdUserDTO.getContact().getStreet());
-        assertEquals(TEST_BUILDING_NUMBER, createdUserDTO.getContact().getBuildingNumber());
-        assertEquals(TEST_FLAT_NUMBER, createdUserDTO.getContact().getFlatNumber());
-        assertEquals(TEST_PHONE_NUMBER_1, createdUserDTO.getContact().getPhoneNumber1());
-        assertEquals(TEST_PHONE_NUMBER_2, createdUserDTO.getContact().getPhoneNumber2());
-
-        assertSystemFields(userDTOMap);
+        assertNotNull(createdSignUpInDTO);
+        assertEquals(signUpInDTO.getEmail(), createdSignUpInDTO.getEmail());
+        assertNull(createdSignUpInDTO.getPassword());
+        assertEquals(signUpInDTO.getRoles(), createdSignUpInDTO.getRoles());
     }
 
     @Test
-    void authenticateUser_returnsBadRequest_whenEmailAndPasswordNotProvided() throws Exception {
+    void authenticateUser_returnsBadRequest_whenMandatoryFieldsNotProvided() throws Exception {
         // given
-        LoginRequestDTO loginRequestDTO = LoginRequestDTO.builder().build();
-        String requestBody = objectMapper.writeValueAsString(loginRequestDTO);
+        SignUpInDTO signUpInDTO = SignUpInDTO.builder().build();
+        String requestBody = objectMapper.writeValueAsString(signUpInDTO);
         // when
         MvcResult mvcResult = this.mockMvc.perform(MockMvcRequestBuilders.post("/api/v1/users/sign-in")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -266,11 +169,11 @@ class UserControllerControllerIT {
     @Test
     void authenticateUser_returnsUnauthorized_whenInvalidCredentialsProvided() throws Exception {
         // given
-        LoginRequestDTO loginRequestDTO = LoginRequestDTO.builder()
+        SignUpInDTO signUpInDTO = SignUpInDTO.builder()
                 .email(TEST_EXISTING_EMAIL)
                 .password("Invalid1!")
                 .build();
-        String requestBody = objectMapper.writeValueAsString(loginRequestDTO);
+        String requestBody = objectMapper.writeValueAsString(signUpInDTO);
         // when
         this.mockMvc.perform(MockMvcRequestBuilders.post("/api/v1/users/sign-in")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -282,11 +185,17 @@ class UserControllerControllerIT {
     @Test
     void authenticateUser_returnsTokens() throws Exception {
         // given
-        LoginRequestDTO loginRequestDTO = LoginRequestDTO.builder()
-                .email(TEST_EXISTING_EMAIL)
+        UserEntity userEntity = UserEntity.builder()
+                .email("temp@test.com")
+                .password("$2a$10$Fv1.pLeI8jOaS8qN13vWWO60oLx.2yTQkDJssjcyssiuxjYeShnPm")
+                .roles(Set.of(roleRepository.findAll().get(2)))
+                .build();
+        userRepository.save(userEntity);
+        SignUpInDTO signUpInDTO = SignUpInDTO.builder()
+                .email(userEntity.getEmail())
                 .password(TEST_PASSWORD)
                 .build();
-        String requestBody = objectMapper.writeValueAsString(loginRequestDTO);
+        String requestBody = objectMapper.writeValueAsString(signUpInDTO);
         // when
         MvcResult mvcResult = this.mockMvc.perform(MockMvcRequestBuilders.post("/api/v1/users/sign-in")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -294,21 +203,23 @@ class UserControllerControllerIT {
                         .characterEncoding("utf-8"))
                 .andExpect(status().isOk()).andReturn();
         // then
-        LoginResponseDTO loginResponseDTO = objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
-                LoginResponseDTO.class);
+        userRepository.deleteById(userEntity.getId());
+        SignInResponseDTO signInResponseDTO = objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
+                SignInResponseDTO.class);
 
-        assertNotNull(loginResponseDTO);
-        assertFalse(StringUtils.isBlank(loginResponseDTO.getAccessToken()));
-        assertFalse(StringUtils.isBlank(loginResponseDTO.getRefreshToken()));
-        assertNotNull(loginResponseDTO.getUser());
+        assertNotNull(signInResponseDTO);
+        assertFalse(StringUtils.isBlank(signInResponseDTO.getAccessToken()));
+        assertFalse(StringUtils.isBlank(signInResponseDTO.getRefreshToken()));
+        assertNotNull(signInResponseDTO.getUser());
     }
 
     @Test
-    void getUserById_returnsNotFound_whenInvalidUserIdProvided() throws Exception {
+    void getUserById_notFound_whenInvalidUserIdProvided() throws Exception {
         // given
-        UUID userId = UUID.randomUUID();
+        UUID invalidUserId = UUID.randomUUID();
         // when
-        MvcResult mvcResult = this.mockMvc.perform(MockMvcRequestBuilders.get("/api/v1/users/" + userId)
+        MvcResult mvcResult = this.mockMvc
+                .perform(MockMvcRequestBuilders.get("/api/v1/users/" + invalidUserId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .characterEncoding("utf-8"))
                 .andExpect(status().isNotFound()).andReturn();
@@ -316,149 +227,37 @@ class UserControllerControllerIT {
         ErrorResponseDTO errorResponseDTO = objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
                 ErrorResponseDTO.class);
 
-        assertNotNull(errorResponseDTO);
-        assertEquals(MessageSource.USER_BY_ID_NOT_FOUND.getText(userId.toString()), errorResponseDTO.getMessage());
+        assertNotNull(errorResponseDTO.getDateTime());
+        assertEquals(HttpStatus.NOT_FOUND.value(), errorResponseDTO.getCode());
+        assertEquals(MessageSource.USER_BY_ID_NOT_FOUND.getText(invalidUserId.toString()),
+                errorResponseDTO.getMessage());
     }
 
     @Test
-    void getUserById_returnsUser() throws Exception {
+    void getUserById_returnsUserData() throws Exception {
         // given
-        UserEntity userEntity = getUserEntity();
-        userEntity = userRepository.save(userEntity);
+        UserEntity userEntity = userRepository.findAll().get(0);
         // when
-        MvcResult mvcResult = this.mockMvc.perform(MockMvcRequestBuilders.get("/api/v1/users/"
-                                + userEntity.getId().toString())
+        MvcResult mvcResult = this.mockMvc
+                .perform(MockMvcRequestBuilders.get("/api/v1/users/" + userEntity.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .characterEncoding("utf-8"))
                 .andExpect(status().isOk()).andReturn();
         // then
-        userRepository.deleteById(userEntity.getId());
-        UserDTO userDTO = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), UserDTO.class);
-        Map<String, Object> userDTOMap = objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
-                new TypeReference<>() {
+        UserDTO userDTO = objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
+                UserDTO.class);
+        Map<String, Object> map = objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
+                new TypeReference<HashMap<String, Object>>() {
                 });
 
+        assertNotNull(userDTO);
+        assertNotNull(map.get("createdAt"));
+        assertNotNull(map.get("createdBy"));
+        assertNotNull(map.get("updatedAt"));
+        assertNotNull(map.get("updatedBy"));
+        assertEquals(userEntity.getId().toString(), map.get("id").toString());
         assertEquals(userEntity.getEmail(), userDTO.getEmail());
-        assertNull(userDTO.getPassword());
-        assertEquals(userEntity.getName(), userDTO.getName());
-        assertEquals(userEntity.getLastName(), userDTO.getLastName());
-        assertEquals(userEntity.getBirthDate(), userDTO.getBirthDate());
-        assertEquals(userEntity.getAbout(), userDTO.getAbout());
-        assertNotNull(userDTO.getContact());
-        assertEquals(userEntity.getContact().getCityId(), userDTO.getContact().getCityId());
-        assertEquals(userEntity.getContact().getStreet(), userDTO.getContact().getStreet());
-        assertEquals(userEntity.getContact().getBuildingNumber(), userDTO.getContact().getBuildingNumber());
-        assertEquals(userEntity.getContact().getFlatNumber(), userDTO.getContact().getFlatNumber());
-        assertEquals(userEntity.getContact().getPhoneNumber1(), userDTO.getContact().getPhoneNumber1());
-        assertEquals(userEntity.getContact().getPhoneNumber2(), userDTO.getContact().getPhoneNumber2());
-
-        assertSystemFields(userDTOMap);
-    }
-
-    @Test
-    void updateUserById_returnsNotFound_whenInvalidUserIdProvided() throws Exception {
-        // given
-        UserDTO userDTO = getUserDTO();
-        String requestBody = objectMapper.writeValueAsString(userDTO);
-        UUID userId = UUID.randomUUID();
-        // when
-        MvcResult mvcResult = this.mockMvc.perform(MockMvcRequestBuilders.put("/api/v1/users/" + userId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(requestBody)
-                        .characterEncoding("utf-8"))
-                .andExpect(status().isNotFound()).andReturn();
-        // then
-        ErrorResponseDTO errorResponseDTO = objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
-                ErrorResponseDTO.class);
-
-        assertNotNull(errorResponseDTO);
-        assertEquals(MessageSource.USER_BY_ID_NOT_FOUND.getText(userId.toString()), errorResponseDTO.getMessage());
-    }
-
-    @Test
-    void updateUserById_returnsUpdatedUser() throws Exception {
-        // given
-        UserEntity userEntity = getUserEntity();
-        userEntity = userRepository.save(userEntity);
-        UserDTO userDTO = UserDTO.builder()
-                .id(userEntity.getId())
-                .email(userEntity.getEmail())
-                .name("UpdatedName")
-                .lastName("UpdatedLastName")
-                .birthDate(LocalDate.of(2000, 1, 1))
-                .doctorTypeId((short) 2)
-                .roles(Set.of(RoleEnum.ROLE_DOCTOR))
-                .build();
-        String requestBody = objectMapper.writeValueAsString(userDTO);
-        // when
-        MvcResult mvcResult = this.mockMvc.perform(MockMvcRequestBuilders.put("/api/v1/users/"
-                                + userEntity.getId())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(requestBody)
-                        .characterEncoding("utf-8"))
-                .andExpect(status().isOk()).andReturn();
-        // then
-        userRepository.deleteById(userEntity.getId());
-        UserDTO updatedUserDTO = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), UserDTO.class);
-        Map<String, Object> userDTOMap = objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
-                new TypeReference<>() {
-                });
-
-        assertNotNull(updatedUserDTO);
-        assertEquals(userDTO.getId().toString(), userDTOMap.get("id").toString());
-        assertEquals(userDTO.getName(), updatedUserDTO.getName());
-        assertEquals(userDTO.getLastName(), updatedUserDTO.getLastName());
-        assertEquals(userDTO.getBirthDate(), updatedUserDTO.getBirthDate());
-        assertEquals(userDTO.getDoctorTypeId(), updatedUserDTO.getDoctorTypeId());
-    }
-
-    @Test
-    void deleteUserById_returnsNotFound_whenInvalidUserIdProvided() throws Exception {
-        // given
-        UUID userId = UUID.randomUUID();
-        // when
-        MvcResult mvcResult = this.mockMvc.perform(MockMvcRequestBuilders.delete("/api/v1/users/" + userId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .characterEncoding("utf-8"))
-                .andExpect(status().isNotFound()).andReturn();
-        // then
-        ErrorResponseDTO errorResponseDTO = objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
-                ErrorResponseDTO.class);
-
-        assertNotNull(errorResponseDTO);
-        assertEquals(MessageSource.USER_BY_ID_NOT_FOUND.getText(userId.toString()), errorResponseDTO.getMessage());
-    }
-
-    @Test
-    void deleteUserById_deletesUser() throws Exception {
-        // given
-        UserEntity userEntity = getUserEntity();
-        userEntity = userRepository.save(userEntity);
-        // when
-        this.mockMvc.perform(MockMvcRequestBuilders.delete("/api/v1/users/" + userEntity.getId())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .characterEncoding("utf-8"))
-                .andExpect(status().isNoContent()).andReturn();
-        // then
-        userRepository.deleteById(userEntity.getId());
-    }
-
-    private static void assertSystemFields(Map<String, Object> userDTOMap) {
-        assertNotNull(userDTOMap.get("id"));
-        assertNotNull(userDTOMap.get("createdAt"));
-        assertNotNull(userDTOMap.get("createdBy"));
-        assertNotNull(userDTOMap.get("updatedAt"));
-        assertNotNull(userDTOMap.get("updatedBy"));
-
-        try {
-            Map<String, Object> contactDTOMap = (Map<String, Object>) userDTOMap.get("contact");
-            assertNotNull(contactDTOMap.get("id"));
-            assertNotNull(contactDTOMap.get("createdAt"));
-            assertNotNull(contactDTOMap.get("createdBy"));
-            assertNotNull(contactDTOMap.get("updatedAt"));
-            assertNotNull(contactDTOMap.get("updatedBy"));
-        } catch (ClassCastException ex) {
-            fail();
-        }
+        assertNull(map.get("password"));
+        assertTrue(userDTO.getRoles().contains(RoleEnum.valueOf(userEntity.getRoles().iterator().next().getName())));
     }
 }

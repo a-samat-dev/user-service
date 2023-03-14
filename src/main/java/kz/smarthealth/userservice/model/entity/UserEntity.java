@@ -34,25 +34,29 @@ public class UserEntity {
     @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(nullable = false)
+    @Column(name = "password", nullable = false)
     private String password;
 
-    @Column(nullable = false)
+    @Column(name = "name", nullable = false)
     private String name;
 
+    @Column(name = "last_name")
     private String lastName;
 
+    @Column(name = "birth_date")
     private LocalDate birthDate;
 
     @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "contact_id", referencedColumnName = "id", nullable = false)
+    @JoinColumn(name = "contact_id", referencedColumnName = "id")
     private ContactEntity contact;
 
+    @Column(name = "doctor_type_id")
     private Short doctorTypeId;
 
+    @Column(name = "about")
     private String about;
 
-    @Column
+    @Column(name = "refresh_token")
     private String refreshToken;
 
     @ManyToMany(fetch = FetchType.EAGER)
@@ -60,19 +64,19 @@ public class UserEntity {
             inverseJoinColumns = @JoinColumn(name = "role_id"))
     private Set<RoleEntity> roles = new HashSet<>();
 
-    @Column(nullable = false)
+    @Column(name = "created_at", nullable = false)
     protected OffsetDateTime createdAt;
 
-    @Column(nullable = false)
+    @Column(name = "updated_at", nullable = false)
     protected OffsetDateTime updatedAt;
 
-    @Column(nullable = false)
+    @Column(name = "created_by", nullable = false)
     protected String createdBy;
 
-    @Column(nullable = false)
+    @Column(name = "updated_by", nullable = false)
     protected String updatedBy;
 
-    @Column
+    @Column(name = "deleted_at")
     protected OffsetDateTime deletedAt;
 
     @PrePersist
@@ -81,5 +85,11 @@ public class UserEntity {
             this.createdAt = OffsetDateTime.now();
         }
         this.updatedAt = OffsetDateTime.now();
+        if (this.createdBy == null) {
+            this.createdBy = this.email;
+        }
+        if (this.updatedBy == null) {
+            this.updatedBy = this.email;
+        }
     }
 }
