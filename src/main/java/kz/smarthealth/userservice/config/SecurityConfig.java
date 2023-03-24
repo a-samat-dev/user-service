@@ -1,7 +1,7 @@
 package kz.smarthealth.userservice.config;
 
-import kz.smarthealth.commonlogic.filter.AuthenticationFilter;
 import kz.smarthealth.userservice.security.AuthEntryPointJwt;
+import kz.smarthealth.userservice.security.AuthenticationFilter;
 import kz.smarthealth.userservice.security.UserDetailsServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -26,7 +26,6 @@ public class SecurityConfig {
 
     private final UserDetailsServiceImpl userDetailsService;
     private final AuthEntryPointJwt unauthorizedHandler;
-    private final AuthenticationFilter authenticationFilter;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -55,7 +54,7 @@ public class SecurityConfig {
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
                 .authorizeHttpRequests()
                 .anyRequest().permitAll();
-        http.addFilterBefore(authenticationFilter, UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(new AuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
         http.authenticationProvider(authenticationProvider());
 
         return http.build();

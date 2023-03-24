@@ -2,7 +2,7 @@ package kz.smarthealth.userservice.validator;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
-import kz.smarthealth.commonlogic.dto.RoleEnum;
+import kz.smarthealth.userservice.model.dto.RoleEnum;
 import kz.smarthealth.userservice.model.dto.UserDTO;
 
 /**

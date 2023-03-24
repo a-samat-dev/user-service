@@ -1,7 +1,7 @@
 package kz.smarthealth.userservice.util;
 
-import kz.smarthealth.commonlogic.dto.RoleEnum;
 import kz.smarthealth.userservice.model.dto.ContactDTO;
+import kz.smarthealth.userservice.model.dto.RoleEnum;
 import kz.smarthealth.userservice.model.dto.UserDTO;
 import kz.smarthealth.userservice.model.entity.ContactEntity;
 import kz.smarthealth.userservice.model.entity.RoleEntity;

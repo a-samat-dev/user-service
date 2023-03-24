@@ -1,11 +1,7 @@
 package kz.smarthealth.userservice.service;
 
-import kz.smarthealth.commonlogic.dto.RoleEnum;
-import kz.smarthealth.commonlogic.exception.CustomException;
-import kz.smarthealth.userservice.model.dto.ContactDTO;
-import kz.smarthealth.userservice.model.dto.SignInResponseDTO;
-import kz.smarthealth.userservice.model.dto.SignUpInDTO;
-import kz.smarthealth.userservice.model.dto.UserDTO;
+import kz.smarthealth.userservice.exception.CustomException;
+import kz.smarthealth.userservice.model.dto.*;
 import kz.smarthealth.userservice.model.entity.RoleEntity;
 import kz.smarthealth.userservice.model.entity.UserEntity;
 import kz.smarthealth.userservice.repository.RoleRepository;

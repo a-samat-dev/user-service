@@ -1,12 +1,12 @@
 package kz.smarthealth.userservice.controller;
 
 import jakarta.validation.Valid;
-import kz.smarthealth.commonlogic.aop.Log;
-import kz.smarthealth.commonlogic.util.AppConstants;
+import kz.smarthealth.userservice.aop.Log;
 import kz.smarthealth.userservice.model.dto.SignInResponseDTO;
 import kz.smarthealth.userservice.model.dto.SignUpInDTO;
 import kz.smarthealth.userservice.model.dto.UserDTO;
 import kz.smarthealth.userservice.service.UserService;
+import kz.smarthealth.userservice.util.AppConstants;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;

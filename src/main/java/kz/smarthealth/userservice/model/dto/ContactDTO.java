@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-import kz.smarthealth.commonlogic.util.AppConstants;
+import kz.smarthealth.userservice.util.AppConstants;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

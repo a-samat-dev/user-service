@@ -3,7 +3,6 @@ package kz.smarthealth.userservice.model.dto;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
-import kz.smarthealth.commonlogic.dto.RoleEnum;
 import kz.smarthealth.userservice.validator.Password;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
