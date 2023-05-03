@@ -10,7 +10,7 @@ import kz.smarthealth.userservice.util.AppConstants;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.access.annotation.Secured;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -60,7 +60,8 @@ public class UserController {
      * @return user information
      */
     @Log
-    @Secured({"ROLE_ADMIN", "ROLE_ORGANIZATION", "ROLE_DOCTOR", "ROLE_PATIENT"})
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_DOCTOR', 'ROLE_ORGANIZATION') " +
+            "or (authenticated and authentication.principal.username == #id.toString())")
     @GetMapping("/{id}")
     public UserDTO getUserById(@PathVariable UUID id) {
         return userService.getUserById(id);

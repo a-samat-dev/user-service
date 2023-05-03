@@ -24,9 +24,10 @@ public class AuthenticationFilter extends OncePerRequestFilter {
         String role = request.getHeader("role");
 
         if (!StringUtils.isBlank(userId) && !StringUtils.isBlank(role)) {
-            User userDetails = new User(userId, "", List.of());
+            List<SimpleGrantedAuthority> grantedAuthorities = List.of(new SimpleGrantedAuthority(role));
+            User userDetails = new User(userId, "", grantedAuthorities);
             UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                    userDetails, null, List.of(new SimpleGrantedAuthority(role)));
+                    userDetails, null, grantedAuthorities);
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
 
