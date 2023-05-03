@@ -23,7 +23,7 @@ public final class TestData {
 
     public static final String TEST_EXISTING_EMAIL = "org@test.com";
     public static final String TEST_EMAIL = "test1@gmail.com";
-    public static final String TEST_PASSWORD = "Qwerty1!";
+    public static final String TEST_PASSWORD = "Sh010101!";
     public static final String TEST_NAME = "first name";
     public static final String TEST_LAST_NAME = "last name";
     public static final LocalDate TEST_BIRTH_DATE = LocalDate.of(2000, 1, 1);

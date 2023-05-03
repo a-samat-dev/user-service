@@ -134,6 +134,7 @@ class UserControllerControllerIT {
         // then
         SignUpInDTO createdSignUpInDTO = objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
                 SignUpInDTO.class);
+        userRepository.findByEmail(TEST_EMAIL).ifPresent(entity -> userRepository.deleteById(entity.getId()));
 
         assertNotNull(createdSignUpInDTO);
         assertEquals(signUpInDTO.getEmail(), createdSignUpInDTO.getEmail());
@@ -181,14 +182,9 @@ class UserControllerControllerIT {
     @Test
     void authenticateUser_returnsTokens() throws Exception {
         // given
-        UserEntity userEntity = UserEntity.builder()
-                .email("temp@test.com")
-                .password("$2a$10$Fv1.pLeI8jOaS8qN13vWWO60oLx.2yTQkDJssjcyssiuxjYeShnPm")
-                .roles(Set.of(roleRepository.findAll().get(2)))
-                .build();
-        userRepository.save(userEntity);
+        createUser(TEST_EMAIL, TEST_PASSWORD, RoleEnum.ROLE_PATIENT);
         SignUpInDTO signUpInDTO = SignUpInDTO.builder()
-                .email(userEntity.getEmail())
+                .email(TEST_EMAIL)
                 .password(TEST_PASSWORD)
                 .build();
         String requestBody = objectMapper.writeValueAsString(signUpInDTO);
@@ -199,9 +195,9 @@ class UserControllerControllerIT {
                         .characterEncoding("utf-8"))
                 .andExpect(status().isOk()).andReturn();
         // then
-        userRepository.deleteById(userEntity.getId());
         SignInResponseDTO signInResponseDTO = objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
                 SignInResponseDTO.class);
+        userRepository.findByEmail(TEST_EMAIL).ifPresent(entity -> userRepository.deleteById(entity.getId()));
 
         assertNotNull(signInResponseDTO);
         assertFalse(StringUtils.isBlank(signInResponseDTO.getAccessToken()));
@@ -210,18 +206,40 @@ class UserControllerControllerIT {
     }
 
     @Test
+    void getUserById_forbidden_whenAccessRestricted() throws Exception {
+        // given
+        UUID invalidUserId = UUID.randomUUID();
+        createUser(TEST_EMAIL, TEST_PASSWORD, RoleEnum.ROLE_PATIENT);
+        UserEntity userEntity = userRepository.findByEmail(TEST_EMAIL).get();
+        // when
+        this.mockMvc
+                .perform(MockMvcRequestBuilders.get("/api/v1/users/" + invalidUserId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("userId", userEntity.getId().toString())
+                        .header("role", RoleEnum.ROLE_PATIENT)
+                        .characterEncoding("utf-8"))
+                .andExpect(status().isForbidden()).andReturn();
+        userRepository.findByEmail(TEST_EMAIL).ifPresent(entity -> userRepository.deleteById(entity.getId()));
+    }
+
+    @Test
     void getUserById_notFound_whenInvalidUserIdProvided() throws Exception {
         // given
         UUID invalidUserId = UUID.randomUUID();
+        createUser(TEST_EMAIL, TEST_PASSWORD, RoleEnum.ROLE_DOCTOR);
+        UserEntity userEntity = userRepository.findByEmail(TEST_EMAIL).get();
         // when
         MvcResult mvcResult = this.mockMvc
                 .perform(MockMvcRequestBuilders.get("/api/v1/users/" + invalidUserId)
                         .contentType(MediaType.APPLICATION_JSON)
+                        .header("userId", userEntity.getId().toString())
+                        .header("role", RoleEnum.ROLE_DOCTOR)
                         .characterEncoding("utf-8"))
                 .andExpect(status().isNotFound()).andReturn();
         // then
         ErrorResponseDTO errorResponseDTO = objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
                 ErrorResponseDTO.class);
+        userRepository.findByEmail(TEST_EMAIL).ifPresent(entity -> userRepository.deleteById(entity.getId()));
 
         assertNotNull(errorResponseDTO.getDateTime());
         assertEquals(HttpStatus.NOT_FOUND.value(), errorResponseDTO.getCode());
@@ -232,11 +250,14 @@ class UserControllerControllerIT {
     @Test
     void getUserById_returnsUserData() throws Exception {
         // given
-        UserEntity userEntity = userRepository.findAll().get(0);
+        createUser(TEST_EMAIL, TEST_PASSWORD, RoleEnum.ROLE_PATIENT);
+        UserEntity userEntity = userRepository.findByEmail(TEST_EMAIL).get();
         // when
         MvcResult mvcResult = this.mockMvc
                 .perform(MockMvcRequestBuilders.get("/api/v1/users/" + userEntity.getId())
                         .contentType(MediaType.APPLICATION_JSON)
+                        .header("userId", userEntity.getId().toString())
+                        .header("role", RoleEnum.ROLE_PATIENT)
                         .characterEncoding("utf-8"))
                 .andExpect(status().isOk()).andReturn();
         // then
@@ -245,6 +266,7 @@ class UserControllerControllerIT {
         Map<String, Object> map = objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
                 new TypeReference<HashMap<String, Object>>() {
                 });
+        userRepository.findByEmail(TEST_EMAIL).ifPresent(entity -> userRepository.deleteById(entity.getId()));
 
         assertNotNull(userDTO);
         assertNotNull(map.get("createdAt"));
@@ -255,5 +277,20 @@ class UserControllerControllerIT {
         assertEquals(userEntity.getEmail(), userDTO.getEmail());
         assertNull(map.get("password"));
         assertTrue(userDTO.getRoles().contains(RoleEnum.valueOf(userEntity.getRoles().iterator().next().getName())));
+    }
+
+    private SignUpInDTO createUser(String email, String password, RoleEnum role) throws Exception {
+        SignUpInDTO signUpInDTO = SignUpInDTO.builder()
+                .email(email)
+                .password(password)
+                .roles(Set.of(role))
+                .build();
+        String requestBody = objectMapper.writeValueAsString(signUpInDTO);
+        MvcResult mvcResult = this.mockMvc.perform(MockMvcRequestBuilders.post("/api/v1/users/sign-up")
+                        .contentType(MediaType.APPLICATION_JSON).content(requestBody).characterEncoding("utf-8"))
+                .andExpect(status().isCreated()).andReturn();
+
+        return objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
+                SignUpInDTO.class);
     }
 }

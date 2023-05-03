@@ -48,6 +48,7 @@ public class UserService {
      * @param signUpInDTO user data
      * @return newly created user
      */
+    @Transactional
     public SignUpInDTO signUp(SignUpInDTO signUpInDTO) {
         validateUserData(signUpInDTO);
         UserEntity userEntity = UserEntity.builder()
