@@ -1,7 +1,7 @@
 package kz.smarthealth.userservice.validator;
 
 import jakarta.validation.ConstraintValidatorContext;
-import kz.smarthealth.userservice.model.dto.RoleEnum;
+import kz.smarthealth.userservice.model.dto.UserRole;
 import kz.smarthealth.userservice.model.dto.UserDTO;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -43,7 +43,7 @@ class UserValidatorTest {
         when(constraintValidatorContext.buildConstraintViolationWithTemplate(any())).thenReturn(constraintViolationBuilder);
         when(constraintViolationBuilder.addPropertyNode(anyString())).thenReturn(nodeBuilderCustomizableContext);
         UserDTO userDTO = UserDTO.builder()
-                .roles(Set.of(RoleEnum.ROLE_PATIENT))
+                .roles(Set.of(UserRole.ROLE_PATIENT))
                 .build();
         // when
         boolean isValid = underTest.isValid(userDTO, constraintValidatorContext);
@@ -57,7 +57,7 @@ class UserValidatorTest {
         when(constraintValidatorContext.buildConstraintViolationWithTemplate(any())).thenReturn(constraintViolationBuilder);
         when(constraintViolationBuilder.addPropertyNode(anyString())).thenReturn(nodeBuilderCustomizableContext);
         UserDTO userDTO = UserDTO.builder()
-                .roles(Set.of(RoleEnum.ROLE_DOCTOR))
+                .roles(Set.of(UserRole.ROLE_DOCTOR))
                 .birthDate(LocalDate.of(2000, 1, 1))
                 .build();
         // when
@@ -70,7 +70,7 @@ class UserValidatorTest {
     void isValid_returnsTrue() {
         // given
         UserDTO userDTO = UserDTO.builder()
-                .roles(Set.of(RoleEnum.ROLE_DOCTOR))
+                .roles(Set.of(UserRole.ROLE_DOCTOR))
                 .birthDate(LocalDate.of(2000, 1, 1))
                 .doctorTypeId((short) 1)
                 .build();

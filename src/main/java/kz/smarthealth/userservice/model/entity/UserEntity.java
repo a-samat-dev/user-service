@@ -47,7 +47,7 @@ public class UserEntity {
     private LocalDate birthDate;
 
     @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "contact_id", referencedColumnName = "id")
+    @JoinColumn(name = "contact_id", referencedColumnName = "id", nullable = false)
     private ContactEntity contact;
 
     @Column(name = "doctor_type_id")

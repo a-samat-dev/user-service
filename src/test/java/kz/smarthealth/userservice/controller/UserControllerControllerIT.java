@@ -99,7 +99,7 @@ class UserControllerControllerIT {
         SignUpInDTO signUpInDTO = SignUpInDTO.builder()
                 .email(userEntityList.get(0).getEmail())
                 .password(TEST_PASSWORD)
-                .roles(Set.of(RoleEnum.ROLE_PATIENT))
+                .roles(Set.of(UserRole.ROLE_PATIENT))
                 .build();
         String requestBody = objectMapper.writeValueAsString(signUpInDTO);
         // when
@@ -124,7 +124,7 @@ class UserControllerControllerIT {
         SignUpInDTO signUpInDTO = SignUpInDTO.builder()
                 .email(TEST_EMAIL)
                 .password(TEST_PASSWORD)
-                .roles(Set.of(RoleEnum.ROLE_PATIENT))
+                .roles(Set.of(UserRole.ROLE_PATIENT))
                 .build();
         String requestBody = objectMapper.writeValueAsString(signUpInDTO);
         // when
@@ -182,7 +182,7 @@ class UserControllerControllerIT {
     @Test
     void authenticateUser_returnsTokens() throws Exception {
         // given
-        createUser(TEST_EMAIL, TEST_PASSWORD, RoleEnum.ROLE_PATIENT);
+        createUser(TEST_EMAIL, TEST_PASSWORD, UserRole.ROLE_PATIENT);
         SignUpInDTO signUpInDTO = SignUpInDTO.builder()
                 .email(TEST_EMAIL)
                 .password(TEST_PASSWORD)
@@ -209,14 +209,14 @@ class UserControllerControllerIT {
     void getUserById_forbidden_whenAccessRestricted() throws Exception {
         // given
         UUID invalidUserId = UUID.randomUUID();
-        createUser(TEST_EMAIL, TEST_PASSWORD, RoleEnum.ROLE_PATIENT);
+        createUser(TEST_EMAIL, TEST_PASSWORD, UserRole.ROLE_PATIENT);
         UserEntity userEntity = userRepository.findByEmail(TEST_EMAIL).get();
         // when
         this.mockMvc
                 .perform(MockMvcRequestBuilders.get("/api/v1/users/" + invalidUserId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("userId", userEntity.getId().toString())
-                        .header("role", RoleEnum.ROLE_PATIENT)
+                        .header("role", UserRole.ROLE_PATIENT)
                         .characterEncoding("utf-8"))
                 .andExpect(status().isForbidden()).andReturn();
         userRepository.findByEmail(TEST_EMAIL).ifPresent(entity -> userRepository.deleteById(entity.getId()));
@@ -226,14 +226,14 @@ class UserControllerControllerIT {
     void getUserById_notFound_whenInvalidUserIdProvided() throws Exception {
         // given
         UUID invalidUserId = UUID.randomUUID();
-        createUser(TEST_EMAIL, TEST_PASSWORD, RoleEnum.ROLE_DOCTOR);
+        createUser(TEST_EMAIL, TEST_PASSWORD, UserRole.ROLE_DOCTOR);
         UserEntity userEntity = userRepository.findByEmail(TEST_EMAIL).get();
         // when
         MvcResult mvcResult = this.mockMvc
                 .perform(MockMvcRequestBuilders.get("/api/v1/users/" + invalidUserId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("userId", userEntity.getId().toString())
-                        .header("role", RoleEnum.ROLE_DOCTOR)
+                        .header("role", UserRole.ROLE_DOCTOR)
                         .characterEncoding("utf-8"))
                 .andExpect(status().isNotFound()).andReturn();
         // then
@@ -250,14 +250,14 @@ class UserControllerControllerIT {
     @Test
     void getUserById_returnsUserData() throws Exception {
         // given
-        createUser(TEST_EMAIL, TEST_PASSWORD, RoleEnum.ROLE_PATIENT);
+        createUser(TEST_EMAIL, TEST_PASSWORD, UserRole.ROLE_PATIENT);
         UserEntity userEntity = userRepository.findByEmail(TEST_EMAIL).get();
         // when
         MvcResult mvcResult = this.mockMvc
                 .perform(MockMvcRequestBuilders.get("/api/v1/users/" + userEntity.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("userId", userEntity.getId().toString())
-                        .header("role", RoleEnum.ROLE_PATIENT)
+                        .header("role", UserRole.ROLE_PATIENT)
                         .characterEncoding("utf-8"))
                 .andExpect(status().isOk()).andReturn();
         // then
@@ -276,10 +276,11 @@ class UserControllerControllerIT {
         assertEquals(userEntity.getId().toString(), map.get("id").toString());
         assertEquals(userEntity.getEmail(), userDTO.getEmail());
         assertNull(map.get("password"));
-        assertTrue(userDTO.getRoles().contains(RoleEnum.valueOf(userEntity.getRoles().iterator().next().getName())));
+        assertTrue(userDTO.getRoles().contains(UserRole.valueOf(userEntity.getRoles().iterator().next().getName())));
+        assertNotNull(userEntity.getContact());
     }
 
-    private SignUpInDTO createUser(String email, String password, RoleEnum role) throws Exception {
+    private SignUpInDTO createUser(String email, String password, UserRole role) throws Exception {
         SignUpInDTO signUpInDTO = SignUpInDTO.builder()
                 .email(email)
                 .password(password)

@@ -1,7 +1,7 @@
 package kz.smarthealth.userservice.service;
 
 import kz.smarthealth.userservice.exception.CustomException;
-import kz.smarthealth.userservice.model.dto.RoleEnum;
+import kz.smarthealth.userservice.model.dto.UserRole;
 import kz.smarthealth.userservice.model.dto.SignUpInDTO;
 import kz.smarthealth.userservice.model.dto.UserDTO;
 import kz.smarthealth.userservice.model.entity.RoleEntity;
@@ -75,7 +75,7 @@ class UserServiceTest {
         SignUpInDTO signUpInDTO = SignUpInDTO.builder()
                 .email(TEST_EMAIL)
                 .password(TEST_PASSWORD)
-                .roles(Set.of(RoleEnum.ROLE_PATIENT))
+                .roles(Set.of(UserRole.ROLE_PATIENT))
                 .build();
         when(userRepository.findByEmail(signUpInDTO.getEmail())).thenReturn(Optional.of(UserEntity.builder().build()));
         // when
@@ -91,7 +91,7 @@ class UserServiceTest {
         SignUpInDTO signUpInDTO = SignUpInDTO.builder()
                 .email(TEST_EMAIL)
                 .password(TEST_PASSWORD)
-                .roles(Set.of(RoleEnum.ROLE_PATIENT))
+                .roles(Set.of(UserRole.ROLE_PATIENT))
                 .build();
         when(userRepository.findByEmail(signUpInDTO.getEmail())).thenReturn(Optional.empty());
         when(roleRepository.findByName(signUpInDTO.getRoles().iterator().next().name()))

@@ -1,7 +1,7 @@
 package kz.smarthealth.userservice.util;
 
 import kz.smarthealth.userservice.model.dto.ContactDTO;
-import kz.smarthealth.userservice.model.dto.RoleEnum;
+import kz.smarthealth.userservice.model.dto.UserRole;
 import kz.smarthealth.userservice.model.dto.UserDTO;
 import kz.smarthealth.userservice.model.entity.ContactEntity;
 import kz.smarthealth.userservice.model.entity.RoleEntity;
@@ -48,7 +48,7 @@ public final class TestData {
                 .doctorTypeId(TEST_DOCTOR_TYPE)
                 .about(TEST_ABOUT)
                 .contact(getContactDTO())
-                .roles(Set.of(RoleEnum.ROLE_ORGANIZATION))
+                .roles(Set.of(UserRole.ROLE_ORGANIZATION))
                 .build();
     }
 
@@ -78,7 +78,7 @@ public final class TestData {
                 .contact(getContactEntity())
                 .roles(Set.of(RoleEntity.builder()
                         .id((short) 1)
-                        .name(RoleEnum.ROLE_PATIENT.name())
+                        .name(UserRole.ROLE_PATIENT.name())
                         .build()))
                 .build();
         userEntity.getContact().setUser(userEntity);

@@ -30,5 +30,5 @@ public class SignUpInDTO {
     @Password
     private String password;
 
-    private Set<RoleEnum> roles;
+    private Set<UserRole> roles;
 }

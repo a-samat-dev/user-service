@@ -25,18 +25,14 @@ public class ContactEntity {
     @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
     private UUID id;
 
-    @Column(nullable = false)
     private Short cityId;
 
-    @Column(nullable = false)
     private String street;
 
-    @Column(nullable = false)
     private String buildingNumber;
 
     private String flatNumber;
 
-    @Column(nullable = false)
     private String phoneNumber1;
 
     private String phoneNumber2;
@@ -66,5 +62,11 @@ public class ContactEntity {
             this.createdAt = OffsetDateTime.now();
         }
         this.updatedAt = OffsetDateTime.now();
+        if (this.createdBy == null) {
+            this.createdBy = "system";
+        }
+        if (this.updatedBy == null) {
+            this.updatedBy = "system";
+        }
     }
 }

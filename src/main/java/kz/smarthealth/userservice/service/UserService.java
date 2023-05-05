@@ -2,6 +2,7 @@ package kz.smarthealth.userservice.service;
 
 import kz.smarthealth.userservice.exception.CustomException;
 import kz.smarthealth.userservice.model.dto.*;
+import kz.smarthealth.userservice.model.entity.ContactEntity;
 import kz.smarthealth.userservice.model.entity.RoleEntity;
 import kz.smarthealth.userservice.model.entity.UserEntity;
 import kz.smarthealth.userservice.repository.RoleRepository;
@@ -55,6 +56,7 @@ public class UserService {
                 .email(signUpInDTO.getEmail())
                 .password(passwordEncoder.encode(signUpInDTO.getPassword()))
                 .roles(getUserRoles(signUpInDTO.getRoles()))
+                .contact(new ContactEntity())
                 .build();
         userRepository.save(userEntity);
         signUpInDTO.setPassword(null);
@@ -91,7 +93,7 @@ public class UserService {
      * @param roles set of role names
      * @return set of role entity
      */
-    private Set<RoleEntity> getUserRoles(Set<RoleEnum> roles) {
+    private Set<RoleEntity> getUserRoles(Set<UserRole> roles) {
         Set<RoleEntity> roleEntitySet = new HashSet<>(roles.size());
 
         roles.forEach(role -> roleEntitySet.add(
@@ -125,7 +127,7 @@ public class UserService {
         userRepository.save(userEntity);
         UserDTO userDTO = modelMapper.map(userEntity, UserDTO.class);
         userDTO.setRoles(userEntity.getRoles().stream()
-                .map(entity -> RoleEnum.valueOf(entity.getName()))
+                .map(entity -> UserRole.valueOf(entity.getName()))
                 .collect(Collectors.toSet()));
 
         return SignInResponseDTO.builder()
@@ -146,7 +148,7 @@ public class UserService {
         UserEntity userEntity = findUserById(id);
         UserDTO userDTO = modelMapper.map(userEntity, UserDTO.class);
         userDTO.setRoles(userEntity.getRoles().stream()
-                .map(entity -> RoleEnum.valueOf(entity.getName()))
+                .map(entity -> UserRole.valueOf(entity.getName()))
                 .collect(Collectors.toSet()));
 
         if (userEntity.getContact() != null) {

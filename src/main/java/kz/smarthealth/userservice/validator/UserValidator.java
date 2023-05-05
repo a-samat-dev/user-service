@@ -2,7 +2,7 @@ package kz.smarthealth.userservice.validator;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
-import kz.smarthealth.userservice.model.dto.RoleEnum;
+import kz.smarthealth.userservice.model.dto.UserRole;
 import kz.smarthealth.userservice.model.dto.UserDTO;
 
 /**
@@ -17,14 +17,14 @@ public class UserValidator implements ConstraintValidator<User, UserDTO> {
         boolean isValid = true;
 
         if (user.getRoles() != null) {
-            if ((user.getRoles().contains(RoleEnum.ROLE_DOCTOR) || user.getRoles().contains(RoleEnum.ROLE_PATIENT))
+            if ((user.getRoles().contains(UserRole.ROLE_DOCTOR) || user.getRoles().contains(UserRole.ROLE_PATIENT))
                     && user.getBirthDate() == null) {
                 context.buildConstraintViolationWithTemplate("Invalid birth date")
                         .addPropertyNode("birthDate")
                         .addConstraintViolation();
                 isValid = false;
             }
-            if (user.getRoles().contains(RoleEnum.ROLE_DOCTOR) && user.getDoctorTypeId() == null) {
+            if (user.getRoles().contains(UserRole.ROLE_DOCTOR) && user.getDoctorTypeId() == null) {
                 context.buildConstraintViolationWithTemplate("Invalid doctor type")
                         .addPropertyNode("doctorTypeId")
                         .addConstraintViolation();

@@ -63,7 +63,7 @@ public class UserDTO {
     private ContactDTO contact;
 
     @NotEmpty(message = "User roles must be provided")
-    private Set<RoleEnum> roles = new HashSet<>();
+    private Set<UserRole> roles = new HashSet<>();
 
     @JsonProperty(access = READ_ONLY)
     @JsonFormat(shape = STRING, pattern = AppConstants.DEFAULT_OFFSET_DATE_TIME_FORMAT)
