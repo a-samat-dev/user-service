@@ -24,3 +24,10 @@ spring:
 jwt:
   secret: jwtSecret
   expiration: 86400000
+aws:
+  access-key-id: test-access-key-id
+  secret-access-key: test-secret-access-key
+  s3:
+    region: eu-central-1
+    bucket-name: test-bucket
+    profile-pictures-folder: user-service/profile-pictures/

@@ -6,7 +6,8 @@ public enum MessageSource {
     EMAIL_IN_USE("%s is already in use, please provide another email address."),
     USER_BY_ID_NOT_FOUND("User with id=%s not found."),
     USER_BY_EMAIL_NOT_FOUND("User with email=%s not found."),
-    ROLE_BY_NAME_NOT_FOUND("Invalid role provided: %s");
+    ROLE_BY_NAME_NOT_FOUND("Invalid role provided: %s"),
+    INVALID_PROFILE_PICTURE_FILE_EXTENSION("Invalid file extension");
 
     private String text;
 

@@ -59,6 +59,9 @@ public class UserEntity {
     @Column(name = "refresh_token")
     private String refreshToken;
 
+    @Column(name = "profile_picture_file_name")
+    private String profilePictureFileName;
+
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id"))

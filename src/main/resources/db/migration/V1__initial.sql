@@ -31,21 +31,22 @@ create table if not exists contacts
 
 create table if not exists users
 (
-    id             uuid primary key,
-    deleted_at     timestamp with time zone,
-    email          varchar(155)                  not null unique,
-    password       varchar(255)                  not null,
-    name           varchar(155),
-    last_name      varchar(155),
-    birth_date     date,
-    doctor_type_id smallint,
-    contact_id     uuid references contacts (id) not null,
-    about          varchar(255),
-    refresh_token  varchar,
-    created_at     timestamp with time zone,
-    updated_at     timestamp with time zone,
-    created_by     varchar(155)                  not null,
-    updated_by     varchar(155)                  not null
+    id                        uuid primary key,
+    deleted_at                timestamp with time zone,
+    email                     varchar(155)                  not null unique,
+    password                  varchar(255)                  not null,
+    name                      varchar(155),
+    last_name                 varchar(155),
+    birth_date                date,
+    doctor_type_id            smallint,
+    contact_id                uuid references contacts (id) not null,
+    about                     varchar(255),
+    refresh_token             varchar,
+    profile_picture_file_name varchar(55),
+    created_at                timestamp with time zone,
+    updated_at                timestamp with time zone,
+    created_by                varchar(155)                  not null,
+    updated_by                varchar(155)                  not null
 );
 
 create table if not exists user_roles

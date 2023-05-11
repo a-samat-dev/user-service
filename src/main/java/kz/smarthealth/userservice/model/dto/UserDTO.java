@@ -65,6 +65,8 @@ public class UserDTO {
     @NotEmpty(message = "User roles must be provided")
     private Set<UserRole> roles = new HashSet<>();
 
+    private String profilePicturePreSignedUrl;
+
     @JsonProperty(access = READ_ONLY)
     @JsonFormat(shape = STRING, pattern = AppConstants.DEFAULT_OFFSET_DATE_TIME_FORMAT)
     private OffsetDateTime createdAt;

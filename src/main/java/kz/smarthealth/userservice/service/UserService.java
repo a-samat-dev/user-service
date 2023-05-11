@@ -18,6 +18,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -36,12 +37,15 @@ import static kz.smarthealth.userservice.util.MessageSource.*;
 @RequiredArgsConstructor
 public class UserService {
 
+    private static final Set<String> PROFILE_PICTURE_FILE_CONTENT_TYPES = Set.of("image/jpeg", "image/jpg", "image/png");
+
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final ModelMapper modelMapper;
     private final AuthenticationManager authenticationManager;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtils jwtUtils;
+    private final AmazonS3Service amazonS3Service;
 
     /**
      * Creates new user
@@ -116,8 +120,8 @@ public class UserService {
     public SignInResponseDTO signIn(SignUpInDTO signUpInDTO) {
         Authentication authenticate = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
                 signUpInDTO.getEmail(), signUpInDTO.getPassword()));
-        UserEntity userEntity = userRepository.findByEmail(signUpInDTO.getEmail())
-                .orElseThrow(() -> CustomException.builder()
+        UserEntity userEntity = userRepository.findByEmail(signUpInDTO.getEmail()).orElseThrow(
+                () -> CustomException.builder()
                         .httpStatus(HttpStatus.NOT_FOUND)
                         .errorMessage(USER_BY_EMAIL_NOT_FOUND.getText(signUpInDTO.getEmail()))
                         .build());
@@ -170,5 +174,51 @@ public class UserService {
                         .httpStatus(HttpStatus.NOT_FOUND)
                         .errorMessage(USER_BY_ID_NOT_FOUND.getText(id.toString()))
                         .build());
+    }
+
+    /**
+     * Saves user profile picture
+     *
+     * @param id   user id
+     * @param file image file
+     */
+    public void uploadProfilePicture(UUID id, MultipartFile file) {
+        UserEntity userEntity = findUserById(id);
+        String fileContentType = getFileContentType(file);
+        amazonS3Service.uploadUserProfilePicture(id.toString() + fileContentType, file);
+        userEntity.setProfilePictureFileName(id + fileContentType);
+        userRepository.save(userEntity);
+    }
+
+    /**
+     * Identifies file extension, and returns it with '.' prefix
+     *
+     * @param file profile picture
+     * @return file extension
+     */
+    private String getFileContentType(MultipartFile file) {
+        String contentType = file.getContentType();
+
+        if (contentType == null || !PROFILE_PICTURE_FILE_CONTENT_TYPES.contains(contentType)) {
+            throw CustomException.builder()
+                    .httpStatus(HttpStatus.BAD_REQUEST)
+                    .error(HttpStatus.BAD_REQUEST.name())
+                    .errorMessage(INVALID_PROFILE_PICTURE_FILE_EXTENSION.getText())
+                    .build();
+        }
+
+        return contentType.contains("jpeg") || contentType.contains("jpg") ? ".jpeg" : ".png";
+    }
+
+    /**
+     * Generates AWS S3 pre-signed url for user profile picture
+     *
+     * @param id user id
+     * @return pre-signed url
+     */
+    public String getProfilePicturePreSignedUrl(UUID id) {
+        UserEntity userEntity = findUserById(id);
+
+        return amazonS3Service.generateProfilePicturePreSignedUrl(userEntity.getProfilePictureFileName());
     }
 }

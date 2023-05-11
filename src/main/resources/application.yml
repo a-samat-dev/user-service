@@ -6,7 +6,7 @@ spring:
   application:
     name: user-service
   datasource:
-    url: ${POSTGRES_URL}/user_service
+    url: ${POSTGRES_URL}
     username: ${POSTGRES_USERNAME}
     password: ${POSTGRES_PASSWORD}
   jpa:
@@ -19,10 +19,17 @@ spring:
     pathmatch:
       matching-strategy: ant_path_matcher
   flyway:
-    url: ${POSTGRES_URL}/user_service
+    url: ${POSTGRES_URL}
     schemas: public
     user: ${POSTGRES_USERNAME}
-    password: ${POSTGRES_PASSWORD}
+    password: ${POSTGRES_USERNAME}
 jwt:
   secret: ${JWT_SECRET}
-  expiration: ${JWT_EXPIRATION_TIME}
+  expiration: 86400000
+aws:
+  access-key-id: ${S3_ACCESS_KEY_ID}
+  secret-access-key: ${S3_SECRET_ACCESS_KEY}
+  s3:
+    region: eu-central-1
+    bucket-name: ${S3_BUCKET_NAME}
+    profile-pictures-folder: user-service/profile-pictures/

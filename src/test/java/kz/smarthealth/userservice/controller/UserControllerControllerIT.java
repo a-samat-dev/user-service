@@ -1,5 +1,7 @@
 package kz.smarthealth.userservice.controller;
 
+import com.amazonaws.HttpMethod;
+import com.amazonaws.services.s3.AmazonS3;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -9,22 +11,29 @@ import kz.smarthealth.userservice.repository.RoleRepository;
 import kz.smarthealth.userservice.repository.UserRepository;
 import kz.smarthealth.userservice.util.MessageSource;
 import org.apache.commons.lang3.StringUtils;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
+import java.net.URL;
 import java.util.*;
 
 import static kz.smarthealth.userservice.util.TestData.*;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
@@ -48,6 +57,14 @@ class UserControllerControllerIT {
 
     @Autowired
     private RoleRepository roleRepository;
+
+    @MockBean
+    private AmazonS3 amazonS3;
+
+    @AfterEach
+    void afterEach() {
+        userRepository.findByEmail(TEST_EMAIL).ifPresent(entity -> userRepository.deleteById(entity.getId()));
+    }
 
     @Test
     void signUp_returnsBadRequest_whenMandatoryFieldsNotProvided() throws Exception {
@@ -134,7 +151,6 @@ class UserControllerControllerIT {
         // then
         SignUpInDTO createdSignUpInDTO = objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
                 SignUpInDTO.class);
-        userRepository.findByEmail(TEST_EMAIL).ifPresent(entity -> userRepository.deleteById(entity.getId()));
 
         assertNotNull(createdSignUpInDTO);
         assertEquals(signUpInDTO.getEmail(), createdSignUpInDTO.getEmail());
@@ -197,7 +213,6 @@ class UserControllerControllerIT {
         // then
         SignInResponseDTO signInResponseDTO = objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
                 SignInResponseDTO.class);
-        userRepository.findByEmail(TEST_EMAIL).ifPresent(entity -> userRepository.deleteById(entity.getId()));
 
         assertNotNull(signInResponseDTO);
         assertFalse(StringUtils.isBlank(signInResponseDTO.getAccessToken()));
@@ -219,7 +234,6 @@ class UserControllerControllerIT {
                         .header("role", UserRole.ROLE_PATIENT)
                         .characterEncoding("utf-8"))
                 .andExpect(status().isForbidden()).andReturn();
-        userRepository.findByEmail(TEST_EMAIL).ifPresent(entity -> userRepository.deleteById(entity.getId()));
     }
 
     @Test
@@ -239,7 +253,6 @@ class UserControllerControllerIT {
         // then
         ErrorResponseDTO errorResponseDTO = objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
                 ErrorResponseDTO.class);
-        userRepository.findByEmail(TEST_EMAIL).ifPresent(entity -> userRepository.deleteById(entity.getId()));
 
         assertNotNull(errorResponseDTO.getDateTime());
         assertEquals(HttpStatus.NOT_FOUND.value(), errorResponseDTO.getCode());
@@ -266,7 +279,6 @@ class UserControllerControllerIT {
         Map<String, Object> map = objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
                 new TypeReference<HashMap<String, Object>>() {
                 });
-        userRepository.findByEmail(TEST_EMAIL).ifPresent(entity -> userRepository.deleteById(entity.getId()));
 
         assertNotNull(userDTO);
         assertNotNull(map.get("createdAt"));
@@ -278,6 +290,76 @@ class UserControllerControllerIT {
         assertNull(map.get("password"));
         assertTrue(userDTO.getRoles().contains(UserRole.valueOf(userEntity.getRoles().iterator().next().getName())));
         assertNotNull(userEntity.getContact());
+    }
+
+    @Test
+    void uploadProfilePicture_returnsForbidden() throws Exception {
+        // given
+        MockMultipartFile file = new MockMultipartFile("file", "original_filename.jpeg",
+                MediaType.IMAGE_JPEG_VALUE, "data".getBytes());
+        createUser(TEST_EMAIL, TEST_PASSWORD, UserRole.ROLE_PATIENT);
+        UserEntity userEntity = userRepository.findByEmail(TEST_EMAIL).get();
+        // when
+        this.mockMvc.perform(MockMvcRequestBuilders.multipart("/api/v1/users/" + UUID.randomUUID() + "/profile-picture")
+                        .file(file)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("userId", userEntity.getId().toString())
+                        .header("role", UserRole.ROLE_PATIENT)
+                        .contentType(MediaType.IMAGE_JPEG_VALUE)
+                        .content(file.getBytes())
+                        .characterEncoding("utf-8"))
+                .andExpect(status().isForbidden()).andReturn();
+    }
+
+    @Test
+    void uploadProfilePicture_uploadsPicture() throws Exception {
+        // given
+        MockMultipartFile file = new MockMultipartFile("file", "original_filename.jpeg",
+                MediaType.IMAGE_JPEG_VALUE, "data".getBytes());
+        createUser(TEST_EMAIL, TEST_PASSWORD, UserRole.ROLE_PATIENT);
+        UserEntity userEntity = userRepository.findByEmail(TEST_EMAIL).get();
+        // when
+        this.mockMvc.perform(MockMvcRequestBuilders.multipart("/api/v1/users/" + userEntity.getId() + "/profile-picture")
+                        .file(file)
+                        .header("userId", userEntity.getId().toString())
+                        .header("role", UserRole.ROLE_PATIENT)
+                        .contentType(MediaType.IMAGE_JPEG_VALUE)
+                        .characterEncoding("utf-8"))
+                .andExpect(status().isOk()).andReturn();
+        // then
+        userEntity = userRepository.findByEmail(TEST_EMAIL).get();
+
+        assertFalse(StringUtils.isEmpty(userEntity.getProfilePictureFileName()));
+    }
+
+    @Test
+    void getProfilePicturePreSignedUrl() throws Exception {
+        // given
+        MockMultipartFile file = new MockMultipartFile("file", "original_filename.jpeg",
+                MediaType.IMAGE_JPEG_VALUE, "data".getBytes());
+        createUser(TEST_EMAIL, TEST_PASSWORD, UserRole.ROLE_PATIENT);
+        UserEntity userEntity = userRepository.findByEmail(TEST_EMAIL).get();
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(new Date());
+        calendar.add(Calendar.HOUR, 1);
+        when(amazonS3.doesObjectExist(any(), any())).thenReturn(false);
+        this.mockMvc.perform(MockMvcRequestBuilders.multipart("/api/v1/users/" + userEntity.getId() + "/profile-picture")
+                        .file(file)
+                        .header("userId", userEntity.getId().toString())
+                        .header("role", UserRole.ROLE_PATIENT)
+                        .contentType(MediaType.IMAGE_JPEG_VALUE)
+                        .characterEncoding("utf-8"))
+                .andExpect(status().isOk()).andReturn();
+        // when
+        MvcResult mvcResult = this.mockMvc.perform(MockMvcRequestBuilders.get("/api/v1/users/" + userEntity.getId() + "/profile-picture")
+                        .header("userId", userEntity.getId().toString())
+                        .header("role", UserRole.ROLE_PATIENT))
+                .andExpect(status().isOk()).andReturn();
+
+        // then
+        String preSignedUrl = mvcResult.getResponse().getContentAsString();
+
+        assertTrue(StringUtils.isEmpty(preSignedUrl));
     }
 
     private SignUpInDTO createUser(String email, String password, UserRole role) throws Exception {

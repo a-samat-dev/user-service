@@ -26,6 +26,7 @@
         <passay.version>1.6.2</passay.version>
         <jjwt.version>0.9.1</jjwt.version>
         <springdoc-openapi-starter-webmvc-ui.version>2.0.4</springdoc-openapi-starter-webmvc-ui.version>
+        <aws-java-sdk.version>1.12.462</aws-java-sdk.version>
     </properties>
     <dependencies>
         <dependency>
@@ -140,6 +141,17 @@
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk</artifactId>
+            <version>${aws-java-sdk.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.findify</groupId>
+            <artifactId>s3mock_2.13</artifactId>
+            <version>0.2.6</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

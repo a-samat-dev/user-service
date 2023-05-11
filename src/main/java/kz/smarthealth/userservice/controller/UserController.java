@@ -9,9 +9,14 @@ import kz.smarthealth.userservice.service.UserService;
 import kz.smarthealth.userservice.util.AppConstants;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
 
@@ -65,5 +70,34 @@ public class UserController {
     @GetMapping("/{id}")
     public UserDTO getUserById(@PathVariable UUID id) {
         return userService.getUserById(id);
+    }
+
+    /**
+     * Saves user profile picture
+     *
+     * @param id   user id
+     * @param file image file
+     */
+    @Log
+    @PreAuthorize("authenticated and authentication.principal.username == #id.toString()")
+    @PostMapping("/{id}/profile-picture")
+    public String uploadProfilePicture(@PathVariable UUID id, @RequestParam("file") MultipartFile file) {
+        userService.uploadProfilePicture(id, file);
+
+        return "uploaded";
+    }
+
+    /**
+     * Generates AWS S3 pre-signed url for user profile picture
+     *
+     * @param id user id
+     * @return pre-signed url
+     */
+    @Log
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_DOCTOR', 'ROLE_ORGANIZATION') " +
+            "or (authenticated and authentication.principal.username == #id.toString())")
+    @GetMapping("/{id}/profile-picture")
+    public String getProfilePicturePreSignedUrl(@PathVariable UUID id) {
+        return userService.getProfilePicturePreSignedUrl(id);
     }
 }
