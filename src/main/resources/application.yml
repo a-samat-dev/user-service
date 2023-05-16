@@ -22,7 +22,7 @@ spring:
     url: ${POSTGRES_URL}
     schemas: public
     user: ${POSTGRES_USERNAME}
-    password: ${POSTGRES_USERNAME}
+    password: ${POSTGRES_PASSWORD}
 jwt:
   secret: ${JWT_SECRET}
   expiration: 86400000
