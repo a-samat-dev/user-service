@@ -31,5 +31,5 @@ aws:
   secret-access-key: ${S3_SECRET_ACCESS_KEY}
   s3:
     region: eu-central-1
-    bucket-name: smart-health-s3
-    profile-pictures-folder: user-service-dev/profile-pictures/
+    bucket-name: ${S3_BUCKET_NAME:smart-health-s3}
+    profile-pictures-folder: ${S3_PROFILE_PICTURE_FOLDER:user-service-local/profile-pictures/}
