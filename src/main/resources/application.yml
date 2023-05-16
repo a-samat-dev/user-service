@@ -6,9 +6,9 @@ spring:
   application:
     name: user-service
   datasource:
-    url: ${POSTGRES_URL}
-    username: ${POSTGRES_USERNAME}
-    password: ${POSTGRES_PASSWORD}
+    url: ${POSTGRES_URL:jdbc:postgresql://localhost:5432/user_service}
+    username: ${POSTGRES_USERNAME:postgres}
+    password: ${POSTGRES_PASSWORD:postgres}
   jpa:
     hibernate:
       ddl-auto: validate
@@ -19,17 +19,17 @@ spring:
     pathmatch:
       matching-strategy: ant_path_matcher
   flyway:
-    url: ${POSTGRES_URL}
+    url: ${POSTGRES_URL:jdbc:postgresql://localhost:5432/user_service}
     schemas: public
-    user: ${POSTGRES_USERNAME}
-    password: ${POSTGRES_PASSWORD}
+    user: ${POSTGRES_USERNAME:postgres}
+    password: ${POSTGRES_PASSWORD:postgres}
 jwt:
-  secret: ${JWT_SECRET}
+  secret: ${JWT_SECRET:jwtSecret}
   expiration: 86400000
 aws:
   access-key-id: ${S3_ACCESS_KEY_ID}
   secret-access-key: ${S3_SECRET_ACCESS_KEY}
   s3:
     region: eu-central-1
-    bucket-name: ${S3_BUCKET_NAME}
+    bucket-name: smart-health-s3-dev
     profile-pictures-folder: user-service/profile-pictures/
