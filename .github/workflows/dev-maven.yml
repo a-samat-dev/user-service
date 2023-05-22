@@ -33,19 +33,6 @@ jobs:
         cache: maven
     - name: Build with Maven
       run: mvn clean test package
-    - name: Analyze with SonarQube
-      uses: SonarSource/sonarqube-scan-action@7295e71c9583053f5bf40e9d4068a0c974603ec8
-      env:
-        GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}  
-        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}   
-        SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-      with:
-        args:
-          -Dsonar.projectKey=a-samat-dev_user-service
-          -Dsonar.organization=a-samat-dev
-          -Dsonar.sources=src
-          -Dsonar.java.binaries=target
-          -Dsonar.sourceEncoding=UTF-8
     - name: Log in to Docker Hub
       run: docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
     - name: Build the Docker image
