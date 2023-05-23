@@ -36,7 +36,8 @@
         <sonar.language>java</sonar.language>
         <sonar.coverage.exclusions>
             **/config/*.java,
-            **/model/*.java
+            **/model/*.java,
+            **/model/**/*.java
         </sonar.coverage.exclusions>
     </properties>
     <dependencies>
