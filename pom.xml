@@ -215,7 +215,9 @@
                 </executions>
                 <configuration>
                     <excludes>
+                        <exclude>**/config/*</exclude>
                         <exclude>**/config/**</exclude>
+                        <exclude>**/model/*</exclude>
                         <exclude>**/model/**</exclude>
                     </excludes>
                 </configuration>
