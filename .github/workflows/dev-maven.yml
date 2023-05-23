@@ -13,10 +13,13 @@ on:
     branches: [ "dev" ]
   pull_request:
     branches: [ "dev" ]
+    types: [opened, synchronize, reopened]
     
 env:
   DOCKER_USER: ${{secrets.DOCKER_USER}}
   DOCKER_PASSWORD: ${{secrets.DOCKER_PASSWORD}}
+  SONAR_TOKEN: ${{secrets.SONAR_TOKEN}}
+  GITHUB_TOKEN: ${{secrets.REPO_ACCESS_TOKEN}}
 
 jobs:
   build:
@@ -31,8 +34,10 @@ jobs:
         java-version: '17'
         distribution: 'corretto'
         cache: maven
-    - name: Build with Maven
-      run: mvn clean test package
+#    - name: Build with Maven
+#      run: mvn clean test package
+    - name: Build and analyze
+      run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=a-samat-dev_user-service
     - name: Log in to Docker Hub
       run: docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
     - name: Build the Docker image

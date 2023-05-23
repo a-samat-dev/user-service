@@ -27,6 +27,8 @@
         <jjwt.version>0.9.1</jjwt.version>
         <springdoc-openapi-starter-webmvc-ui.version>2.0.4</springdoc-openapi-starter-webmvc-ui.version>
         <aws-java-sdk.version>1.12.462</aws-java-sdk.version>
+        <sonar.organization>a-samat-dev</sonar.organization>
+        <sonar.host.url>https://sonarcloud.io</sonar.host.url>
     </properties>
     <dependencies>
         <dependency>
