@@ -215,7 +215,7 @@
                 </executions>
                 <configuration>
                     <excludes>
-                        <exclude>src/main/java/kz/smarthealth/userservice/config/AppConfig.java</exclude>
+                        <exclude>kz/smarthealth/userservice/config/*.java</exclude>
                     </excludes>
                 </configuration>
             </plugin>
