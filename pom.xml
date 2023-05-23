@@ -39,7 +39,6 @@
             **/model/**/*.java
         </sonar.coverage.exclusions>
         <jacoco.version>0.8.10</jacoco.version>
-<!--        <project.reporting.outputDirectory>target/site</project.reporting.outputDirectory>-->
     </properties>
     <dependencies>
         <dependency>
@@ -206,36 +205,6 @@
                 <version>${jacoco.version}</version>
                 <executions>
                     <execution>
-                        <id>merge-unit-and-integration</id>
-                        <phase>post-integration-test</phase>
-                        <goals>
-                            <goal>merge</goal>
-                        </goals>
-                        <configuration>
-                            <fileSets>
-                                <fileSet>
-                                    <directory>${project.build.directory}/jacoco-output/</directory>
-                                    <includes>
-                                        <include>*.exec</include>
-                                    </includes>
-                                </fileSet>
-                            </fileSets>
-                            <destFile>${project.build.directory}/jacoco-output/merged.exec</destFile>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>create-merged-report</id>
-                        <phase>post-integration-test</phase>
-                        <goals>
-                            <goal>report</goal>
-                        </goals>
-                        <configuration>
-                            <dataFile>${project.build.directory}/jacoco-output/merged.exec</dataFile>
-                            <outputDirectory>${project.reporting.outputDirectory}/jacoco-merged-test-coverage-report
-                            </outputDirectory>
-                        </configuration>
-                    </execution>
-                    <execution>
                         <id>jacoco-initialize</id>
                         <goals>
                             <goal>prepare-agent</goal>
@@ -249,6 +218,16 @@
                         </goals>
                     </execution>
                 </executions>
+                <configuration>
+                    <fileSets>
+                        <fileSet>
+                            <directory>${project.build.directory}</directory>
+                            <includes>
+                                <include>*.exec</include>
+                            </includes>
+                        </fileSet>
+                    </fileSets>
+                </configuration>
             </plugin>
         </plugins>
     </build>
