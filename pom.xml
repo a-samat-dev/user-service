@@ -36,7 +36,8 @@
         <sonar.coverage.exclusions>
             **/config/*.java,
             **/model/*.java,
-            **/model/**/*.java
+            **/model/**/*.java,
+            kz/smarthealth/userservice/UserServiceApplication.java
         </sonar.coverage.exclusions>
         <jacoco.version>0.8.10</jacoco.version>
     </properties>

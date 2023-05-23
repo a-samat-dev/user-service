@@ -8,10 +8,7 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
 import kz.smarthealth.userservice.util.AppConstants;
 import kz.smarthealth.userservice.validator.User;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDate;
@@ -28,12 +25,13 @@ import static com.fasterxml.jackson.annotation.JsonProperty.Access.READ_ONLY;
  * <p>
  * Created by Samat Abibulla 2022-10-09
  */
+@EqualsAndHashCode(callSuper = true)
 @Data
 @Builder
 @User
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserDTO {
+public class UserDTO extends BaseDTO {
 
     @JsonProperty(access = READ_ONLY)
     private UUID id;
@@ -66,18 +64,4 @@ public class UserDTO {
     private Set<UserRole> roles = new HashSet<>();
 
     private String profilePicturePreSignedUrl;
-
-    @JsonProperty(access = READ_ONLY)
-    @JsonFormat(shape = STRING, pattern = AppConstants.DEFAULT_OFFSET_DATE_TIME_FORMAT)
-    private OffsetDateTime createdAt;
-
-    @JsonFormat(shape = STRING, pattern = AppConstants.DEFAULT_OFFSET_DATE_TIME_FORMAT)
-    @JsonProperty(access = READ_ONLY)
-    private OffsetDateTime updatedAt;
-
-    @JsonProperty(access = READ_ONLY)
-    private String createdBy;
-
-    @JsonProperty(access = READ_ONLY)
-    private String updatedBy;
 }
