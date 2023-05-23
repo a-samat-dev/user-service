@@ -34,6 +34,9 @@
         <sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
         <sonar.jacoco.reportPath>${project.basedir}/../target/jacoco.exec</sonar.jacoco.reportPath>
         <sonar.language>java</sonar.language>
+        <sonar.coverage.exclusions>
+            **/config/*.class
+        </sonar.coverage.exclusions>
     </properties>
     <dependencies>
         <dependency>
@@ -213,11 +216,6 @@
                         </goals>
                     </execution>
                 </executions>
-                <configuration>
-                    <excludes>
-                        <exclude>kz/smarthealth/userservice/config/*.java</exclude>
-                    </excludes>
-                </configuration>
             </plugin>
         </plugins>
     </build>
