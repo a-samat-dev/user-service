@@ -1,17 +1,19 @@
 package kz.smarthealth.userservice.controller;
 
-import com.amazonaws.HttpMethod;
 import com.amazonaws.services.s3.AmazonS3;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import kz.smarthealth.userservice.model.dto.*;
 import kz.smarthealth.userservice.model.entity.UserEntity;
-import kz.smarthealth.userservice.repository.RoleRepository;
+import kz.smarthealth.userservice.repository.ContactRepository;
 import kz.smarthealth.userservice.repository.UserRepository;
+import kz.smarthealth.userservice.service.PatientKafkaProducerService;
 import kz.smarthealth.userservice.util.MessageSource;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -26,13 +28,12 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import java.net.URL;
 import java.util.*;
 
 import static kz.smarthealth.userservice.util.TestData.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -56,21 +57,66 @@ class UserControllerControllerIT {
     private UserRepository userRepository;
 
     @Autowired
-    private RoleRepository roleRepository;
+    private ContactRepository contactRepository;
+
+    @MockBean
+    private PatientKafkaProducerService patientKafkaProducerService;
 
     @MockBean
     private AmazonS3 amazonS3;
 
+    @BeforeEach
+    void beforeEach() throws JsonProcessingException {
+        doNothing().when(patientKafkaProducerService).sendMessage(any());
+    }
+
     @AfterEach
     void afterEach() {
-        userRepository.findByEmail(TEST_EMAIL).ifPresent(entity -> userRepository.deleteById(entity.getId()));
+        userRepository.findByEmail(TEST_EMAIL).ifPresent(entity -> {
+            contactRepository.deleteById(entity.getContact().getId());
+            userRepository.deleteById(entity.getId());
+        });
     }
 
     @Test
     void signUp_returnsBadRequest_whenMandatoryFieldsNotProvided() throws Exception {
         // given
-        SignUpInDTO signUpInDTO = SignUpInDTO.builder().build();
-        String requestBody = objectMapper.writeValueAsString(signUpInDTO);
+        UserDTO userDTO = UserDTO.builder().build();
+        String requestBody = objectMapper.writeValueAsString(userDTO);
+        // when
+        MvcResult mvcResult = this.mockMvc.perform(MockMvcRequestBuilders.post("/api/v1/users/sign-up")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody)
+                        .characterEncoding("utf-8"))
+                .andExpect(status().isBadRequest()).andReturn();
+        // then
+        ErrorResponseDTO errorResponseDTO = objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
+                ErrorResponseDTO.class);
+        Map<String, String> invalidFields = errorResponseDTO.getInvalidFields();
+
+        assertEquals(5, invalidFields.size());
+        assertTrue(invalidFields.containsKey("email"));
+        assertTrue(invalidFields.containsKey("password"));
+        assertTrue(invalidFields.containsKey("name"));
+        assertTrue(invalidFields.containsKey("contact"));
+        assertTrue(invalidFields.containsKey("roles"));
+    }
+
+    @Test
+    void signUp_returnsBadRequest_whenContactMandatoryFieldsNotProvided() throws Exception {
+        // given
+        UserDTO userDTO = UserDTO.builder()
+                .email(TEST_EMAIL)
+                .password(TEST_PASSWORD)
+                .name(TEST_NAME)
+                .birthDate(TEST_BIRTH_DATE)
+                .contact(ContactDTO.builder()
+                        .build())
+                .roles(Set.of(UserRole.ROLE_PATIENT))
+                .build();
+        String requestBody = objectMapper.writeValueAsString(userDTO);
+        requestBody = requestBody.substring(0, requestBody.length() - 1) +
+                ",\"password\":" + "\"" + TEST_PASSWORD + "\"" + "}";
         // when
         MvcResult mvcResult = this.mockMvc.perform(MockMvcRequestBuilders.post("/api/v1/users/sign-up")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -83,42 +129,28 @@ class UserControllerControllerIT {
         Map<String, String> invalidFields = errorResponseDTO.getInvalidFields();
 
         assertEquals(2, invalidFields.size());
-        assertTrue(invalidFields.containsKey("email"));
-        assertTrue(invalidFields.containsKey("password"));
-    }
-
-    @Test
-    void signUp_returnsBadRequest_whenInvalidRoles() throws Exception {
-        // given
-        SignUpInDTO signUpInDTO = SignUpInDTO.builder()
-                .email(TEST_EMAIL)
-                .password(TEST_PASSWORD)
-                .build();
-        String requestBody = objectMapper.writeValueAsString(signUpInDTO);
-        // when
-        MvcResult mvcResult = this.mockMvc.perform(MockMvcRequestBuilders.post("/api/v1/users/sign-up")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(requestBody)
-                        .characterEncoding("utf-8"))
-                .andExpect(status().isBadRequest()).andReturn();
-        // then
-        ErrorResponseDTO errorResponseDTO = objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
-                ErrorResponseDTO.class);
-
-        assertNotNull(errorResponseDTO.getMessage());
-        assertEquals("Invalid roles provided.", errorResponseDTO.getMessage());
+        assertTrue(invalidFields.containsKey("contact.cityId"));
+        assertTrue(invalidFields.containsKey("contact.phoneNumber1"));
     }
 
     @Test
     void signUp_returnsBadRequest_whenEmailInUse() throws Exception {
         // given
         List<UserEntity> userEntityList = userRepository.findAll();
-        SignUpInDTO signUpInDTO = SignUpInDTO.builder()
+        UserDTO userDTO = UserDTO.builder()
                 .email(userEntityList.get(0).getEmail())
                 .password(TEST_PASSWORD)
+                .name(TEST_NAME)
+                .birthDate(TEST_BIRTH_DATE)
+                .contact(ContactDTO.builder()
+                        .cityId(TEST_CITY)
+                        .phoneNumber1(TEST_PHONE_NUMBER_1)
+                        .build())
                 .roles(Set.of(UserRole.ROLE_PATIENT))
                 .build();
-        String requestBody = objectMapper.writeValueAsString(signUpInDTO);
+        String requestBody = objectMapper.writeValueAsString(userDTO);
+        requestBody = requestBody.substring(0, requestBody.length() - 1) +
+                ",\"password\":" + "\"" + TEST_PASSWORD + "\"" + "}";
         // when
         MvcResult mvcResult = this.mockMvc.perform(MockMvcRequestBuilders.post("/api/v1/users/sign-up")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -138,24 +170,24 @@ class UserControllerControllerIT {
     @Test
     void signUp_returnsCreatedUser() throws Exception {
         // given
-        SignUpInDTO signUpInDTO = SignUpInDTO.builder()
+        UserDTO userDTO = UserDTO.builder()
                 .email(TEST_EMAIL)
                 .password(TEST_PASSWORD)
+                .name(TEST_NAME)
+                .birthDate(TEST_BIRTH_DATE)
+                .contact(ContactDTO.builder()
+                        .cityId(TEST_CITY)
+                        .phoneNumber1(TEST_PHONE_NUMBER_1)
+                        .build())
                 .roles(Set.of(UserRole.ROLE_PATIENT))
                 .build();
-        String requestBody = objectMapper.writeValueAsString(signUpInDTO);
+        String requestBody = objectMapper.writeValueAsString(userDTO);
+        requestBody = requestBody.substring(0, requestBody.length() - 1) +
+                ",\"password\":" + "\"" + TEST_PASSWORD + "\"" + "}";
         // when
-        MvcResult mvcResult = this.mockMvc.perform(MockMvcRequestBuilders.post("/api/v1/users/sign-up")
+        this.mockMvc.perform(MockMvcRequestBuilders.post("/api/v1/users/sign-up")
                         .contentType(MediaType.APPLICATION_JSON).content(requestBody).characterEncoding("utf-8"))
-                .andExpect(status().isCreated()).andReturn();
-        // then
-        SignUpInDTO createdSignUpInDTO = objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
-                SignUpInDTO.class);
-
-        assertNotNull(createdSignUpInDTO);
-        assertEquals(signUpInDTO.getEmail(), createdSignUpInDTO.getEmail());
-        assertNull(createdSignUpInDTO.getPassword());
-        assertEquals(signUpInDTO.getRoles(), createdSignUpInDTO.getRoles());
+                .andExpect(status().isCreated());
     }
 
     @Test
@@ -282,9 +314,6 @@ class UserControllerControllerIT {
 
         assertNotNull(userDTO);
         assertNotNull(map.get("createdAt"));
-        assertNotNull(map.get("createdBy"));
-        assertNotNull(map.get("updatedAt"));
-        assertNotNull(map.get("updatedBy"));
         assertEquals(userEntity.getId().toString(), map.get("id").toString());
         assertEquals(userEntity.getEmail(), userDTO.getEmail());
         assertNull(map.get("password"));
@@ -362,18 +391,24 @@ class UserControllerControllerIT {
         assertTrue(StringUtils.isEmpty(preSignedUrl));
     }
 
-    private SignUpInDTO createUser(String email, String password, UserRole role) throws Exception {
-        SignUpInDTO signUpInDTO = SignUpInDTO.builder()
+    private void createUser(String email, String password, UserRole role) throws Exception {
+        UserDTO userDTO = UserDTO.builder()
                 .email(email)
-                .password(password)
+                .name(TEST_NAME)
+                .birthDate(TEST_BIRTH_DATE)
+                .contact(ContactDTO.builder()
+                        .cityId(TEST_CITY)
+                        .phoneNumber1(TEST_PHONE_NUMBER_1)
+                        .build())
                 .roles(Set.of(role))
+                .doctorTypeId(TEST_DOCTOR_TYPE)
                 .build();
-        String requestBody = objectMapper.writeValueAsString(signUpInDTO);
-        MvcResult mvcResult = this.mockMvc.perform(MockMvcRequestBuilders.post("/api/v1/users/sign-up")
-                        .contentType(MediaType.APPLICATION_JSON).content(requestBody).characterEncoding("utf-8"))
-                .andExpect(status().isCreated()).andReturn();
-
-        return objectMapper.readValue(mvcResult.getResponse().getContentAsString(),
-                SignUpInDTO.class);
+        String requestBody = objectMapper.writeValueAsString(userDTO);
+        requestBody = requestBody.substring(0, requestBody.length() - 1) +
+                ",\"password\":" + "\"" + password + "\"" + "}";
+        this.mockMvc.perform(MockMvcRequestBuilders.post("/api/v1/users/sign-up")
+                        .contentType(MediaType.APPLICATION_JSON).content(requestBody)
+                        .characterEncoding("utf-8"))
+                .andExpect(status().isCreated());
     }
 }

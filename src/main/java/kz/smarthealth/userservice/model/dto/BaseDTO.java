@@ -11,19 +11,9 @@ import static com.fasterxml.jackson.annotation.JsonFormat.Shape.STRING;
 import static com.fasterxml.jackson.annotation.JsonProperty.Access.READ_ONLY;
 
 @Data
-public class BaseDTO {
+public abstract class BaseDTO {
 
     @JsonProperty(access = READ_ONLY)
     @JsonFormat(shape = STRING, pattern = AppConstants.DEFAULT_OFFSET_DATE_TIME_FORMAT)
     private OffsetDateTime createdAt;
-
-    @JsonFormat(shape = STRING, pattern = AppConstants.DEFAULT_OFFSET_DATE_TIME_FORMAT)
-    @JsonProperty(access = READ_ONLY)
-    private OffsetDateTime updatedAt;
-
-    @JsonProperty(access = READ_ONLY)
-    private String createdBy;
-
-    @JsonProperty(access = READ_ONLY)
-    private String updatedBy;
 }

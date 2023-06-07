@@ -66,9 +66,6 @@ public final class TestData {
     public static UserEntity getUserEntity() {
         UserEntity userEntity = UserEntity.builder()
                 .createdAt(OffsetDateTime.now().minusDays(7))
-                .createdBy(TEST_EMAIL)
-                .updatedAt(OffsetDateTime.now().minusDays(7))
-                .updatedBy(TEST_EMAIL)
                 .email(TEST_EMAIL)
                 .password(TEST_PASSWORD)
                 .name(TEST_NAME)
@@ -89,9 +86,6 @@ public final class TestData {
     public static ContactEntity getContactEntity() {
         return ContactEntity.builder()
                 .createdAt(OffsetDateTime.now().minusDays(7))
-                .createdBy(TEST_EMAIL)
-                .updatedAt(OffsetDateTime.now().minusDays(7))
-                .updatedBy(TEST_EMAIL)
                 .cityId(TEST_CITY)
                 .street(TEST_STREET)
                 .buildingNumber(TEST_BUILDING_NUMBER)

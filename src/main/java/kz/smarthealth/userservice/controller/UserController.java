@@ -36,14 +36,14 @@ public class UserController {
     /**
      * Registers new user
      *
-     * @param signUpInDTO user data
+     * @param userDTO user dataw
      * @return newly created user
      */
     @PostMapping("/sign-up")
     @ResponseStatus(HttpStatus.CREATED)
-    public SignUpInDTO signUp(@RequestBody @Valid SignUpInDTO signUpInDTO) {
-        log.info("Incoming request to sign up, email={}", signUpInDTO.getEmail());
-        return userService.signUp(signUpInDTO);
+    public void signUp(@RequestBody @Valid UserDTO userDTO) {
+        log.info("Incoming request to sign up, email={}", userDTO.getEmail());
+        userService.signUp(userDTO);
     }
 
     /**

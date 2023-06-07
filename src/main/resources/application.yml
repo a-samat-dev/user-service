@@ -33,3 +33,11 @@ aws:
     region: eu-central-1
     bucket-name: ${S3_BUCKET_NAME:smart-health-s3}
     profile-pictures-folder: ${S3_PROFILE_PICTURE_FOLDER:user-service-local/profile-pictures/}
+  kafka:
+    producer:
+      bootstrap-servers: ${KAFKA_BROKERS:localhost:9092}
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+kafka:
+  topic:
+    new-patients: user-service-new-patients

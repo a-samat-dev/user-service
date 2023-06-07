@@ -46,8 +46,7 @@ public class UserEntity {
     @Column(name = "birth_date")
     private LocalDate birthDate;
 
-    @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "contact_id", referencedColumnName = "id", nullable = false)
+    @OneToOne(mappedBy = "user", fetch = FetchType.EAGER)
     private ContactEntity contact;
 
     @Column(name = "doctor_type_id")
@@ -70,29 +69,10 @@ public class UserEntity {
     @Column(name = "created_at", nullable = false)
     protected OffsetDateTime createdAt;
 
-    @Column(name = "updated_at", nullable = false)
-    protected OffsetDateTime updatedAt;
-
-    @Column(name = "created_by", nullable = false)
-    protected String createdBy;
-
-    @Column(name = "updated_by", nullable = false)
-    protected String updatedBy;
-
-    @Column(name = "deleted_at")
-    protected OffsetDateTime deletedAt;
-
     @PrePersist
     private void prePersist() {
         if (this.createdAt == null) {
             this.createdAt = OffsetDateTime.now();
-        }
-        this.updatedAt = OffsetDateTime.now();
-        if (this.createdBy == null) {
-            this.createdBy = this.email;
-        }
-        if (this.updatedBy == null) {
-            this.updatedBy = this.email;
         }
     }
 }

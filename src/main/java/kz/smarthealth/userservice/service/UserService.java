@@ -1,10 +1,11 @@
 package kz.smarthealth.userservice.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import kz.smarthealth.userservice.exception.CustomException;
 import kz.smarthealth.userservice.model.dto.*;
-import kz.smarthealth.userservice.model.entity.ContactEntity;
 import kz.smarthealth.userservice.model.entity.RoleEntity;
 import kz.smarthealth.userservice.model.entity.UserEntity;
+import kz.smarthealth.userservice.repository.ContactRepository;
 import kz.smarthealth.userservice.repository.RoleRepository;
 import kz.smarthealth.userservice.repository.UserRepository;
 import kz.smarthealth.userservice.security.JwtUtils;
@@ -40,53 +41,71 @@ public class UserService {
     private static final Set<String> PROFILE_PICTURE_FILE_CONTENT_TYPES = Set.of("image/jpeg", "image/jpg", "image/png");
 
     private final UserRepository userRepository;
+    private final ContactRepository contactRepository;
     private final RoleRepository roleRepository;
     private final ModelMapper modelMapper;
     private final AuthenticationManager authenticationManager;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtils jwtUtils;
     private final AmazonS3Service amazonS3Service;
+    private final PatientKafkaProducerService patientKafkaProducerService;
 
     /**
      * Creates new user
      *
-     * @param signUpInDTO user data
+     * @param userDTO user data
      * @return newly created user
      */
     @Transactional
-    public SignUpInDTO signUp(SignUpInDTO signUpInDTO) {
-        validateUserData(signUpInDTO);
-        UserEntity userEntity = UserEntity.builder()
-                .email(signUpInDTO.getEmail())
-                .password(passwordEncoder.encode(signUpInDTO.getPassword()))
-                .roles(getUserRoles(signUpInDTO.getRoles()))
-                .contact(new ContactEntity())
-                .build();
-        userRepository.save(userEntity);
-        signUpInDTO.setPassword(null);
+    public void signUp(UserDTO userDTO) {
+        validateUserData(userDTO);
+        UserEntity userEntity = modelMapper.map(userDTO, UserEntity.class);
+        userEntity.setPassword(passwordEncoder.encode(userDTO.getPassword()));
+        userEntity.setRoles(getUserRoles(userDTO.getRoles()));
+        userEntity = userRepository.save(userEntity);
+        userEntity.getContact().setUser(userEntity);
+        contactRepository.save(userEntity.getContact());
+        sendPatient(userEntity);
+    }
 
-        return signUpInDTO;
+    /**
+     * Whenever new user is created, patient also should be created in patient-service
+     *
+     * @param userEntity newly created user
+     */
+    private void sendPatient(UserEntity userEntity) {
+        try {
+            patientKafkaProducerService.sendMessage(PatientDTO.builder()
+                    .userId(userEntity.getId())
+                    .firstName(userEntity.getName())
+                    .lastName(userEntity.getLastName())
+                    .birthDate(userEntity.getBirthDate())
+                    .phoneNumber(userEntity.getContact().getPhoneNumber1())
+                    .build());
+        } catch (JsonProcessingException e) {
+            // do nothing, the exception message will be handled by Spring AOP (See @Log annotation in aop package)
+        }
     }
 
     /**
      * Validates user data
      *
-     * @param signUpInDTO user data to be created
+     * @param userDTO user data to be created
      */
-    private void validateUserData(SignUpInDTO signUpInDTO) {
-        if (signUpInDTO.getRoles() == null || signUpInDTO.getRoles().isEmpty()) {
+    private void validateUserData(UserDTO userDTO) {
+        if (userDTO.getRoles() == null || userDTO.getRoles().isEmpty()) {
             throw CustomException.builder()
                     .httpStatus(HttpStatus.BAD_REQUEST)
                     .error(INVALID_ROLES.name())
-                    .errorMessage(INVALID_ROLES.getText(signUpInDTO.getEmail()))
+                    .errorMessage(INVALID_ROLES.getText(userDTO.getEmail()))
                     .build();
         }
 
-        if (userRepository.findByEmail(signUpInDTO.getEmail()).isPresent()) {
+        if (userRepository.findByEmail(userDTO.getEmail()).isPresent()) {
             throw CustomException.builder()
                     .httpStatus(HttpStatus.BAD_REQUEST)
                     .error(EMAIL_IN_USE.name())
-                    .errorMessage(EMAIL_IN_USE.getText(signUpInDTO.getEmail()))
+                    .errorMessage(EMAIL_IN_USE.getText(userDTO.getEmail()))
                     .build();
         }
     }

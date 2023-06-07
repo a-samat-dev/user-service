@@ -1,12 +1,12 @@
 package kz.smarthealth.userservice.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import kz.smarthealth.userservice.exception.CustomException;
-import kz.smarthealth.userservice.model.dto.SignInResponseDTO;
-import kz.smarthealth.userservice.model.dto.SignUpInDTO;
-import kz.smarthealth.userservice.model.dto.UserDTO;
-import kz.smarthealth.userservice.model.dto.UserRole;
+import kz.smarthealth.userservice.model.dto.*;
+import kz.smarthealth.userservice.model.entity.ContactEntity;
 import kz.smarthealth.userservice.model.entity.RoleEntity;
 import kz.smarthealth.userservice.model.entity.UserEntity;
+import kz.smarthealth.userservice.repository.ContactRepository;
 import kz.smarthealth.userservice.repository.RoleRepository;
 import kz.smarthealth.userservice.repository.UserRepository;
 import kz.smarthealth.userservice.security.JwtUtils;
@@ -27,9 +27,11 @@ import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.LocalDate;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static kz.smarthealth.userservice.util.MessageSource.*;
 import static kz.smarthealth.userservice.util.TestData.*;
@@ -48,6 +50,8 @@ class UserServiceTest {
     @Mock
     private UserRepository userRepository;
     @Mock
+    private ContactRepository contactRepository;
+    @Mock
     private RoleRepository roleRepository;
     @Spy
     private ModelMapper modelMapper = new ModelMapper();
@@ -59,18 +63,26 @@ class UserServiceTest {
     private JwtUtils jwtUtils;
     @Mock
     private AmazonS3Service amazonS3Service;
+    @Mock
+    private PatientKafkaProducerService patientKafkaProducerService;
     @InjectMocks
     private UserService underTest;
 
     @Test
     void signUp_throwsException_whenInvalidRoles() {
         // given
-        SignUpInDTO signUpInDTO = SignUpInDTO.builder()
+        UserDTO userDTO = UserDTO.builder()
                 .email(TEST_EMAIL)
                 .password(TEST_PASSWORD)
+                .name(TEST_NAME)
+                .lastName(TEST_NAME)
+                .contact(ContactDTO.builder()
+                        .cityId(TEST_CITY)
+                        .phoneNumber1(TEST_PHONE_NUMBER_1)
+                        .build())
                 .build();
         // when
-        CustomException exception = assertThrows(CustomException.class, () -> underTest.signUp(signUpInDTO));
+        CustomException exception = assertThrows(CustomException.class, () -> underTest.signUp(userDTO));
         // then
         assertEquals("Invalid roles provided.", exception.getErrorMessage());
     }
@@ -78,14 +90,20 @@ class UserServiceTest {
     @Test
     void signUp_throwsException_whenEmailInUse() {
         // given
-        SignUpInDTO signUpInDTO = SignUpInDTO.builder()
+        UserDTO userDTO = UserDTO.builder()
                 .email(TEST_EMAIL)
                 .password(TEST_PASSWORD)
+                .name(TEST_NAME)
+                .lastName(TEST_NAME)
+                .contact(ContactDTO.builder()
+                        .cityId(TEST_CITY)
+                        .phoneNumber1(TEST_PHONE_NUMBER_1)
+                        .build())
                 .roles(Set.of(UserRole.ROLE_PATIENT))
                 .build();
-        when(userRepository.findByEmail(signUpInDTO.getEmail())).thenReturn(Optional.of(UserEntity.builder().build()));
+        when(userRepository.findByEmail(userDTO.getEmail())).thenReturn(Optional.of(UserEntity.builder().build()));
         // when
-        CustomException exception = assertThrows(CustomException.class, () -> underTest.signUp(signUpInDTO));
+        CustomException exception = assertThrows(CustomException.class, () -> underTest.signUp(userDTO));
         // then
         assertEquals("test1@gmail.com is already in use, please provide another email address.",
                 exception.getErrorMessage());
@@ -94,39 +112,82 @@ class UserServiceTest {
     @Test
     void signUp_throwsException_whenInvalidRoleProvided() {
         // given
-        SignUpInDTO signUpInDTO = SignUpInDTO.builder()
+        UserDTO userDTO = UserDTO.builder()
                 .email(TEST_EMAIL)
                 .password(TEST_PASSWORD)
+                .name(TEST_NAME)
+                .lastName(TEST_NAME)
+                .contact(ContactDTO.builder()
+                        .cityId(TEST_CITY)
+                        .phoneNumber1(TEST_PHONE_NUMBER_1)
+                        .build())
                 .roles(Set.of(UserRole.ROLE_PATIENT))
                 .build();
-        when(userRepository.findByEmail(signUpInDTO.getEmail())).thenReturn(Optional.empty());
+        when(userRepository.findByEmail(userDTO.getEmail())).thenReturn(Optional.empty());
         when(roleRepository.findByName(UserRole.ROLE_PATIENT.name())).thenReturn(Optional.empty());
         // when
-        CustomException exception = assertThrows(CustomException.class, () -> underTest.signUp(signUpInDTO));
+        CustomException exception = assertThrows(CustomException.class, () -> underTest.signUp(userDTO));
         // then
         assertEquals(ROLE_BY_NAME_NOT_FOUND.getText(UserRole.ROLE_PATIENT.name()), exception.getErrorMessage());
     }
 
     @Test
-    void signUp_createsUser() {
+    void signUp_createsUser() throws JsonProcessingException {
         // given
-        SignUpInDTO signUpInDTO = SignUpInDTO.builder()
+        ArgumentCaptor<UserEntity> userEntityArgumentCaptor = ArgumentCaptor.forClass(UserEntity.class);
+        ArgumentCaptor<ContactEntity> contactEntityArgumentCaptor = ArgumentCaptor.forClass(ContactEntity.class);
+        ArgumentCaptor<PatientDTO> patientDTOArgumentCaptor = ArgumentCaptor.forClass(PatientDTO.class);
+        UserDTO userDTO = UserDTO.builder()
                 .email(TEST_EMAIL)
                 .password(TEST_PASSWORD)
+                .name(TEST_NAME)
+                .lastName(TEST_LAST_NAME)
+                .birthDate(TEST_BIRTH_DATE)
+                .contact(ContactDTO.builder()
+                        .cityId(TEST_CITY)
+                        .phoneNumber1(TEST_PHONE_NUMBER_1)
+                        .build())
                 .roles(Set.of(UserRole.ROLE_PATIENT))
                 .build();
-        when(userRepository.findByEmail(signUpInDTO.getEmail())).thenReturn(Optional.empty());
-        when(roleRepository.findByName(signUpInDTO.getRoles().iterator().next().name()))
+        UserEntity userEntity = modelMapper.map(userDTO, UserEntity.class);
+        userEntity.setId(UUID.randomUUID());
+        when(passwordEncoder.encode(TEST_PASSWORD)).thenReturn("encrypted_password");
+        when(roleRepository.findByName(userDTO.getRoles().iterator().next().name()))
                 .thenReturn(Optional.of(RoleEntity.builder()
                         .id((short) 1)
-                        .name(signUpInDTO.getRoles().iterator().next().name())
+                        .name(userDTO.getRoles().iterator().next().name())
                         .build()));
+        when(userRepository.save(any())).thenReturn(userEntity);
         // when
-        SignUpInDTO actualSignUpInDTO = underTest.signUp(signUpInDTO);
+        underTest.signUp(userDTO);
         // then
-        assertNotNull(actualSignUpInDTO);
-        assertEquals(signUpInDTO.getEmail(), actualSignUpInDTO.getEmail());
-        assertEquals(signUpInDTO.getPassword(), actualSignUpInDTO.getPassword());
+        verify(userRepository).save(userEntityArgumentCaptor.capture());
+        verify(contactRepository).save(contactEntityArgumentCaptor.capture());
+        verify(patientKafkaProducerService).sendMessage(patientDTOArgumentCaptor.capture());
+        UserEntity actualUserEntity = userEntityArgumentCaptor.getValue();
+        ContactEntity actualContactEntity = contactEntityArgumentCaptor.getValue();
+        PatientDTO actualPatientDTO = patientDTOArgumentCaptor.getValue();
+
+        assertNotNull(actualUserEntity);
+        assertEquals(TEST_EMAIL, actualUserEntity.getEmail());
+        assertNotNull(actualUserEntity.getPassword());
+        assertEquals(TEST_NAME, actualUserEntity.getName());
+        assertEquals(TEST_LAST_NAME, actualUserEntity.getLastName());
+        assertEquals(TEST_BIRTH_DATE, actualUserEntity.getBirthDate());
+        assertEquals(Set.of(UserRole.ROLE_PATIENT), actualUserEntity.getRoles().stream()
+                .map(role -> UserRole.valueOf(role.getName())).collect(Collectors.toSet()));
+        assertNotNull(actualUserEntity.getContact());
+
+        assertNotNull(actualContactEntity);
+        assertEquals(TEST_CITY, actualContactEntity.getCityId());
+        assertEquals(TEST_PHONE_NUMBER_1, actualContactEntity.getPhoneNumber1());
+
+        assertNotNull(actualPatientDTO);
+        assertNotNull(actualPatientDTO.getUserId());
+        assertEquals(TEST_NAME, actualPatientDTO.getFirstName());
+        assertEquals(TEST_LAST_NAME, actualPatientDTO.getLastName());
+        assertEquals(TEST_BIRTH_DATE, actualPatientDTO.getBirthDate());
+        assertEquals(TEST_PHONE_NUMBER_1, actualPatientDTO.getPhoneNumber());
     }
 
     @Test
@@ -213,9 +274,6 @@ class UserServiceTest {
         // then
         assertNotNull(userDTO);
         assertEquals(userEntity.getCreatedAt(), userDTO.getCreatedAt());
-        assertEquals(userEntity.getCreatedBy(), userDTO.getCreatedBy());
-        assertEquals(userEntity.getUpdatedAt(), userDTO.getUpdatedAt());
-        assertEquals(userEntity.getUpdatedBy(), userDTO.getUpdatedBy());
         assertEquals(userEntity.getId(), userDTO.getId());
         assertEquals(userEntity.getEmail(), userDTO.getEmail());
         assertEquals(userEntity.getName(), userDTO.getName());
@@ -224,9 +282,6 @@ class UserServiceTest {
         assertEquals(userEntity.getAbout(), userDTO.getAbout());
         assertNotNull(userDTO.getContact());
         assertEquals(userEntity.getContact().getCreatedAt(), userDTO.getContact().getCreatedAt());
-        assertEquals(userEntity.getContact().getCreatedBy(), userDTO.getContact().getCreatedBy());
-        assertEquals(userEntity.getContact().getUpdatedAt(), userDTO.getContact().getUpdatedAt());
-        assertEquals(userEntity.getContact().getUpdatedBy(), userDTO.getContact().getUpdatedBy());
         assertEquals(userEntity.getContact().getId(), userDTO.getContact().getId());
         assertEquals(userEntity.getContact().getCityId(), userDTO.getContact().getCityId());
         assertEquals(userEntity.getContact().getStreet(), userDTO.getContact().getStreet());

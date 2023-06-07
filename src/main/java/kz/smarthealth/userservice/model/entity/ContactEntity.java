@@ -37,36 +37,18 @@ public class ContactEntity {
 
     private String phoneNumber2;
 
-    @OneToOne(mappedBy = "contact", fetch = FetchType.LAZY)
+    @OneToOne
+    @JoinColumn(name = "user_id", nullable = false)
     @ToString.Exclude
     private UserEntity user;
 
     @Column(nullable = false)
     protected OffsetDateTime createdAt;
 
-    @Column(nullable = false)
-    protected OffsetDateTime updatedAt;
-
-    @Column(nullable = false)
-    protected String createdBy;
-
-    @Column(nullable = false)
-    protected String updatedBy;
-
-    @Column(name = "deleted_at")
-    protected OffsetDateTime deletedAt;
-
     @PrePersist
     private void prePersist() {
         if (this.createdAt == null) {
             this.createdAt = OffsetDateTime.now();
-        }
-        this.updatedAt = OffsetDateTime.now();
-        if (this.createdBy == null) {
-            this.createdBy = "system";
-        }
-        if (this.updatedBy == null) {
-            this.updatedBy = "system";
         }
     }
 }
