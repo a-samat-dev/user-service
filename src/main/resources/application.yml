@@ -35,7 +35,7 @@ aws:
     profile-pictures-folder: ${S3_PROFILE_PICTURE_FOLDER:user-service-local/profile-pictures/}
   kafka:
     producer:
-      bootstrap-servers: ${KAFKA_BROKERS:localhost:9092}
+      bootstrap-servers: ${KAFKA_BROKERS}
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
 kafka:
