@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.concurrent.CompletableFuture;
@@ -29,6 +30,7 @@ public class PatientKafkaProducerService {
     private final ObjectMapper objectMapper;
 
     @Log
+    @Async
     public void sendMessage(PatientDTO patientDTO) throws JsonProcessingException {
         String message = objectMapper.writeValueAsString(patientDTO);
         CompletableFuture<SendResult<String, String>> future = kafkaTemplate.send(topicName, message);
