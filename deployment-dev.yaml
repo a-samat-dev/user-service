@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: dev-user-service-deployment
-          image: asamatdev/sh-user-service:23
+          image: asamatdev/sh-user-service:24
           ports:
             - containerPort: 8080
           imagePullPolicy: Always
@@ -30,7 +30,7 @@ spec:
               memory: 256Mi
               cpu: 200m
             limits:
-              memory: 256Gi
+              memory: 256Mi
               cpu: 300m
 ---
 apiVersion: v1
