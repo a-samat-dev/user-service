@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: dev-user-service-deployment
-          image: asamatdev/sh-user-service:25
+          image: asamatdev/sh-user-service:28
           ports:
             - containerPort: 8080
           imagePullPolicy: Always

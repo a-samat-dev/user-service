@@ -19,7 +19,7 @@ spring:
     pathmatch:
       matching-strategy: ant_path_matcher
   flyway:
-    url: ${POSTGRES_URL:jdbc:postgresql://localhost:5432/user_service}
+    url: ${POSTGRES_URL:jdbc:postgresql://localhost:5432}/user_service
     schemas: public
     user: ${POSTGRES_USERNAME:postgres}
     password: ${POSTGRES_PASSWORD:postgres}
