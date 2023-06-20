@@ -1,16 +1,12 @@
 package kz.smarthealth.userservice.model.dto;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-import kz.smarthealth.userservice.util.AppConstants;
 import lombok.*;
 
-import java.time.OffsetDateTime;
 import java.util.UUID;
 
-import static com.fasterxml.jackson.annotation.JsonFormat.Shape.STRING;
 import static com.fasterxml.jackson.annotation.JsonProperty.Access.READ_ONLY;
 
 /**

@@ -24,8 +24,9 @@ spring:
     user: ${POSTGRES_USERNAME:postgres}
     password: ${POSTGRES_PASSWORD:postgres}
   kafka:
-    producer:
-      bootstrap-servers: ${KAFKA_BROKERS:localhost:9092}
+    properties:
+      session.timeout.ms: 45000
+      bootstrap.servers: ${KAFKA_BROKERS:localhost:9092}
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
 jwt:
