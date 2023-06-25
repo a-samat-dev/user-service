@@ -132,17 +132,17 @@ public class UserService {
     /**
      * Authenticates user.
      *
-     * @param signUpInDTO user sign in information
+     * @param signInDTO user sign in information
      * @return access token and refresh token
      */
     @Transactional
-    public SignInResponseDTO signIn(SignUpInDTO signUpInDTO) {
+    public SignInResponseDTO signIn(SignInDTO signInDTO) {
         Authentication authenticate = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
-                signUpInDTO.getEmail(), signUpInDTO.getPassword()));
-        UserEntity userEntity = userRepository.findByEmail(signUpInDTO.getEmail()).orElseThrow(
+                signInDTO.getEmail(), signInDTO.getPassword()));
+        UserEntity userEntity = userRepository.findByEmail(signInDTO.getEmail()).orElseThrow(
                 () -> CustomException.builder()
                         .httpStatus(HttpStatus.NOT_FOUND)
-                        .errorMessage(USER_BY_EMAIL_NOT_FOUND.getText(signUpInDTO.getEmail()))
+                        .errorMessage(USER_BY_EMAIL_NOT_FOUND.getText(signInDTO.getEmail()))
                         .build());
         String token = jwtUtils.generateJwtToken(authenticate);
         String refreshToken = jwtUtils.generateRefreshToken(authenticate);

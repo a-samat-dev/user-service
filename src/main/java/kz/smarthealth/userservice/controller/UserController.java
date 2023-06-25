@@ -2,18 +2,14 @@ package kz.smarthealth.userservice.controller;
 
 import jakarta.validation.Valid;
 import kz.smarthealth.userservice.aop.Log;
+import kz.smarthealth.userservice.model.dto.SignInDTO;
 import kz.smarthealth.userservice.model.dto.SignInResponseDTO;
-import kz.smarthealth.userservice.model.dto.SignUpInDTO;
 import kz.smarthealth.userservice.model.dto.UserDTO;
 import kz.smarthealth.userservice.service.UserService;
 import kz.smarthealth.userservice.util.AppConstants;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.io.ByteArrayResource;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -49,13 +45,13 @@ public class UserController {
     /**
      * Authenticates user.
      *
-     * @param signUpInDTO user sign in information
+     * @param signInDTO user sign in information
      * @return access token and refresh token
      */
     @PostMapping("/sign-in")
-    public SignInResponseDTO singIn(@RequestBody @Valid SignUpInDTO signUpInDTO) {
-        log.info("Incoming request to sign in, email={}", signUpInDTO.getEmail());
-        return userService.signIn(signUpInDTO);
+    public SignInResponseDTO singIn(@RequestBody @Valid SignInDTO signInDTO) {
+        log.info("Incoming request to sign in, email={}", signInDTO.getEmail());
+        return userService.signIn(signInDTO);
     }
 
     /**

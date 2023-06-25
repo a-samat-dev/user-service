@@ -27,7 +27,6 @@ import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.time.LocalDate;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -193,7 +192,7 @@ class UserServiceTest {
     @Test
     void signIn_throwsError_whenInvalidCredentialsProvided() {
         // given
-        SignUpInDTO signInDTO = SignUpInDTO.builder()
+        SignInDTO signInDTO = SignInDTO.builder()
                 .email(TEST_EMAIL)
                 .password(TEST_PASSWORD)
                 .build();
@@ -208,7 +207,7 @@ class UserServiceTest {
     @Test
     void signIn_throwsError_whenUserNotFound() {
         // given
-        SignUpInDTO signInDTO = SignUpInDTO.builder()
+        SignInDTO signInDTO = SignInDTO.builder()
                 .email(TEST_EMAIL)
                 .password(TEST_PASSWORD)
                 .build();
@@ -227,7 +226,7 @@ class UserServiceTest {
         // given
         String token = "token";
         String refreshToken = "refresh-token";
-        SignUpInDTO signInDTO = SignUpInDTO.builder()
+        SignInDTO signInDTO = SignInDTO.builder()
                 .email(TEST_EMAIL)
                 .password(TEST_PASSWORD)
                 .build();

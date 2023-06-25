@@ -193,8 +193,8 @@ class UserControllerTest {
     @Test
     void authenticateUser_returnsBadRequest_whenMandatoryFieldsNotProvided() throws Exception {
         // given
-        SignUpInDTO signUpInDTO = SignUpInDTO.builder().build();
-        String requestBody = objectMapper.writeValueAsString(signUpInDTO);
+        SignInDTO signInDTO = SignInDTO.builder().build();
+        String requestBody = objectMapper.writeValueAsString(signInDTO);
         // when
         MvcResult mvcResult = this.mockMvc.perform(MockMvcRequestBuilders.post("/api/v1/users/sign-in")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -214,11 +214,11 @@ class UserControllerTest {
     @Test
     void authenticateUser_returnsUnauthorized_whenInvalidCredentialsProvided() throws Exception {
         // given
-        SignUpInDTO signUpInDTO = SignUpInDTO.builder()
+        SignInDTO signInDTO = SignInDTO.builder()
                 .email(TEST_EXISTING_EMAIL)
                 .password("Invalid1!")
                 .build();
-        String requestBody = objectMapper.writeValueAsString(signUpInDTO);
+        String requestBody = objectMapper.writeValueAsString(signInDTO);
         // when
         this.mockMvc.perform(MockMvcRequestBuilders.post("/api/v1/users/sign-in")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -231,11 +231,11 @@ class UserControllerTest {
     void authenticateUser_returnsTokens() throws Exception {
         // given
         createUser(TEST_EMAIL, TEST_PASSWORD, UserRole.ROLE_PATIENT);
-        SignUpInDTO signUpInDTO = SignUpInDTO.builder()
+        SignInDTO signInDTO = SignInDTO.builder()
                 .email(TEST_EMAIL)
                 .password(TEST_PASSWORD)
                 .build();
-        String requestBody = objectMapper.writeValueAsString(signUpInDTO);
+        String requestBody = objectMapper.writeValueAsString(signInDTO);
         // when
         MvcResult mvcResult = this.mockMvc.perform(MockMvcRequestBuilders.post("/api/v1/users/sign-in")
                         .contentType(MediaType.APPLICATION_JSON)
